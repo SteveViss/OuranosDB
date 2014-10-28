@@ -13,17 +13,22 @@ h5file = '16_gcm16_cccma_cgcm3_1_t63-sresa1b-run1.mat'
 mat = h5.File(h5folder+h5file,'r') 
 
 
-# .mat validation (based on file struct)
+# STRUCT VALIDATION (v2014 wo/ USA)
 
 """  UNIT TEST 1: Validate if the structure of the original Hierarchical Data
 Format version 5 (or HDF5) produced by MATLAB is consistent with the program
 and uncorrupted (md5sum) """
 
-## Explo grid cover
+## SPATIAL GRID
 
-"""  UNIT TEST 2: Validate if the HDF5 file is covering the entire Quebec
-region” """
+"""  UNIT TEST 2:  A.Validate if the HDF5 file is covering the entire Quebec
+region. B.Validate if the observed grid is consistent with predicted grid """
 
+## Extract centroid of observed cells
+if "observed" in h5file:
+
+
+## Extract boundaries of predicted cells
 bound_grids = mat['out']['grid']['BoundingBox']
 ls_bound = []
 
@@ -35,7 +40,7 @@ for i in range(0,bound_grids.size-1):
 df_bound = pd.DataFrame(ls_bound)
 df_bound.to_csv("BOUND_FILES/"+h5file.replace(".mat","_bound.csv"),index=False)
 
-### Model desc
+### MODEL DESC
 
 """  UNIT TEST 3: Retrieve informations from the group 'model' and make sure
 these informations are already in the metadata table (PostgreSQL) """
