@@ -3,7 +3,7 @@ Ouranos
 
 Importation tests for Regional Climatic Models (HDF5 format, version >7.4, ```*.mat```) outputs into PostGIS raster objects.
 
-Dependancies
+Dependencies
 ============
 
 ### Libraries 
