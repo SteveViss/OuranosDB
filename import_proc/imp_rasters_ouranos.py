@@ -6,7 +6,7 @@ import re
 import pandas as pd
 
 # Setup wd
-os.chdir("/home/steve/Documents/Maitrise/StageMFFP/BD_CLIM/")
+os.chdir("/home/steve/Documents/GitHub/OuranosDB/")
 
 # import .mat file
 h5folder = 'MAT_FILES/'

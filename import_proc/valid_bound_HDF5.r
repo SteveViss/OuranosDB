@@ -4,7 +4,7 @@
 
 # Set wd and import file --------------------------------------------------
 
-setwd("~/Documents/Maitrise/StageMFFP/BD_CLIM/BOUND_FILES/")
+setwd("~/Documents/GitHub/OuranosDB/bound_files/")
 ls_files  <- list.files(getwd(),pattern=".csv")
 
 require(sp)
