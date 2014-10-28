@@ -1,0 +1,10 @@
+# HDF5 files
+
+MAT_FILES
+
+# R and python objects
+
+*.pyc
+*.Rout
+*.Rdata
+*.Rhistory
