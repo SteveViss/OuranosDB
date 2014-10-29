@@ -15,7 +15,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="rs_clim_tbl">
 	<schema name="modclim"/>
-	<position x="84" y="26"/>
+	<position x="71" y="144"/>
 	<column name="rs_id" not-null="true">
 		<type name="bigint"/>
 	</column>
@@ -32,18 +32,11 @@ CAUTION: Do not modify this file unless you know what you are doing.
 			<column name="rs_id"/>
 		</idxelement>
 	</index>
-	<index name="idx_rs" table="modclim.rs_clim_tbl"
-		 concurrent="false" unique="false" fast-update="false"
-		 index-type="gist" factor="0">
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="rs_mod"/>
-		</idxelement>
-	</index>
 </table>
 
 <table name="rs_metadata_tbl">
 	<schema name="modclim"/>
-	<position x="494" y="81"/>
+	<position x="465" y="99"/>
 	<column name="rs_id" not-null="true">
 		<type name="serial"/>
 	</column>

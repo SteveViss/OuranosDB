@@ -7,13 +7,6 @@
 SET check_function_bodies = false;
 -- ddl-end --
 
--- object: svissault | type: ROLE --
--- DROP ROLE svissault;
-CREATE ROLE svissault WITH 
-	SUPERUSER
-	UNENCRYPTED PASSWORD 'maple';
--- ddl-end --
-
 
 -- Database creation must be done outside an multicommand file.
 -- These commands were put in this file only for convenience.
@@ -37,7 +30,7 @@ SET search_path TO pg_catalog,public,modclim;
 CREATE TABLE modclim.rs_clim_tbl(
 	rs_id bigint NOT NULL,
 	rs_mod raster NOT NULL,
-	rs_id_rs_metadata_tbl integer,
+	rs_id_rs_metadata_tbl bigint,
 	CONSTRAINT rs_clim_tbl_pkey PRIMARY KEY (rs_id)
 
 );
@@ -51,20 +44,11 @@ CREATE INDEX idx_rs_clim_tbl_pkey ON modclim.rs_clim_tbl
 	);
 -- ddl-end --
 
--- object: idx_rs | type: INDEX --
--- DROP INDEX modclim.idx_rs;
-CREATE INDEX idx_rs ON modclim.rs_clim_tbl
-	USING gist
-	(
-	  rs_mod ASC NULLS LAST
-	);
--- ddl-end --
-
 
 -- object: modclim.rs_metadata_tbl | type: TABLE --
 -- DROP TABLE modclim.rs_metadata_tbl;
 CREATE TABLE modclim.rs_metadata_tbl(
-	rs_id serial NOT NULL,
+	rs_id bigint NOT NULL,
 	ouranos_version varchar(20),
 	ref_model_ipcc varchar(15) NOT NULL,
 	ref_scenario_ipcc varchar(15) NOT NULL,
