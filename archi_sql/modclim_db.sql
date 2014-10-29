@@ -7,6 +7,13 @@
 SET check_function_bodies = false;
 -- ddl-end --
 
+-- object: svissault | type: ROLE --
+-- DROP ROLE svissault;
+CREATE ROLE svissault WITH 
+	SUPERUSER
+	UNENCRYPTED PASSWORD 'maple';
+-- ddl-end --
+
 
 -- Database creation must be done outside an multicommand file.
 -- These commands were put in this file only for convenience.
