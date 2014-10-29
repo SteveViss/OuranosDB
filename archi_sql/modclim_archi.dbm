@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+         Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel pgmodeler-ver="0.7.1">
+<database name="modclim_db">
+</database>
+
+<schema name="public" protected="true" fill-color="#e1e1e1" sql-disabled="true">
+</schema>
+
+<schema name="modclim" rect-visible="true" fill-color="#ffff7f">
+</schema>
+
+<table name="rs_clim_tbl">
+	<schema name="modclim"/>
+	<position x="84" y="26"/>
+	<column name="rs_id" not-null="true">
+		<type name="bigint"/>
+	</column>
+	<column name="rs_mod" not-null="true">
+		<type name="raster"/>
+	</column>
+	<constraint name="rs_clim_tbl_pkey" type="pk-constr" factor="10" table="modclim.rs_clim_tbl">
+		<columns names="rs_id" ref-type="src-columns"/>
+	</constraint>
+	<index name="idx_rs_clim_tbl_pkey" table="modclim.rs_clim_tbl"
+		 concurrent="false" unique="false" fast-update="false"
+		 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="rs_id"/>
+		</idxelement>
+	</index>
+	<index name="idx_rs" table="modclim.rs_clim_tbl"
+		 concurrent="false" unique="false" fast-update="false"
+		 index-type="gist" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="rs_mod"/>
+		</idxelement>
+	</index>
+</table>
+
+<table name="rs_metadata_tbl">
+	<schema name="modclim"/>
+	<position x="494" y="81"/>
+	<column name="rs_id" not-null="true">
+		<type name="serial"/>
+	</column>
+	<column name="ouranos_version">
+		<type name="varchar" length="20"/>
+	</column>
+	<column name="ref_model_ipcc" not-null="true">
+		<type name="varchar" length="15"/>
+	</column>
+	<column name="ref_scenario_ipcc" not-null="true">
+		<type name="varchar" length="15"/>
+	</column>
+	<column name="run" not-null="true">
+		<type name="smallint"/>
+	</column>
+	<column name="dscaling_method" not-null="true">
+		<type name="varchar" length="10"/>
+	</column>
+	<column name="is_obs" not-null="true">
+		<type name="boolean"/>
+	</column>
+	<column name="is_pred" not-null="true">
+		<type name="boolean"/>
+	</column>
+	<column name="bioclim_var" not-null="true">
+		<type name="varchar" length="20"/>
+	</column>
+	<column name="date_mod" not-null="true">
+		<type name="date"/>
+	</column>
+	<constraint name="rs_metadata_tbl_pkey" type="pk-constr" factor="10" table="modclim.rs_metadata_tbl">
+		<columns names="rs_id" ref-type="src-columns"/>
+	</constraint>
+	<index name="idx_rs_metadata_pkey" table="modclim.rs_metadata_tbl"
+		 concurrent="false" unique="true" fast-update="false"
+		 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="rs_id"/>
+		</idxelement>
+	</index>
+	<index name="idx_metadata_search" table="modclim.rs_metadata_tbl"
+		 concurrent="false" unique="true" fast-update="false"
+		 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="ref_model_ipcc"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="ref_scenario_ipcc"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="dscaling_method"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="bioclim_var"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="date_mod"/>
+		</idxelement>
+	</index>
+</table>
+
+<relationship name="rs_clim_tbl_has_one_rs_metadata_tbl" type="rel11"
+	 src-col-pattern="{sc}_{st}"
+	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
+	 src-fk-pattern="{st}_fk"
+	 col-indexes="2" constr-indexes="1,2"
+	 src-table="modclim.rs_metadata_tbl"
+	 dst-table="modclim.rs_clim_tbl"
+	 src-required="true" dst-required="false"/>
+
+</dbmodel>
