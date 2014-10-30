@@ -38,7 +38,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<schema name="modclim"/>
 	<position x="465" y="99"/>
 	<column name="rs_id" not-null="true">
-		<type name="serial"/>
+		<type name="bigint"/>
 	</column>
 	<column name="ouranos_version">
 		<type name="varchar" length="20"/>

@@ -4,8 +4,6 @@ import numpy as np
 import re
 import pandas as pd
 import psycopg2
-import posixpath
-from functools import partial
 
 ####################################
 # FUNCTIONS
@@ -13,6 +11,9 @@ from functools import partial
 
 
 def import_h5( h5folder, name_h5file ):
+
+	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	"""
 
 	try:
 		hfile = h5.File(h5folder+name_h5file,'r')
@@ -22,7 +23,22 @@ def import_h5( h5folder, name_h5file ):
 	  	print 'ERROR: Could not open HDF5 file'
 
 
+
+def get_model_h5files (h5folder , model):
+
+	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	"""
+
+	group_h5files = [f for f in os.listdir('./'+ h5folder) if os.path.isfile(os.path.join(h5folder,f)) and group_model in f]
+
+	return group_h5files
+
+
+
 def get_cells_bounds_pred( hfile, out = False):
+
+	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	"""
 
 	bound_grids = hfile['out']['grid']['BoundingBox']
 	ls_bound = []
@@ -63,34 +79,53 @@ def get_cells_centroid_pred( hfile , out = False):
 	return df_centroid
 
 
-def flt_hdf_paths(ls,node = None,level = None):
+
+def flt_hdf_paths(ls,nodes = None,level = None):
 
 	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
 	"""
 
-	if node and level :
-		flt = [elem for elem in ls if elem.count('/') == level and node in elem]
-	elif node and not level :
-		flt = [elem for elem in ls if node in elem]
-	elif not node and level :
+	if nodes and level :
+		if type(nodes) == list:
+
+			flt = [elem for elem in ls if elem.count('/') == level]
+			for node in nodes:
+				flt = [elem for elem in flt if node in elem]
+
+		else:	
+			flt = [elem for elem in ls if elem.count('/') == level and nodes in elem]
+
+	elif nodes and not level :
+		if type(nodes) == list:
+			for node in nodes:
+				flt = [elem for elem in flt if node in elem]
+		else:
+			flt = [elem for elem in ls if nodes in elem]
+
+	elif not nodes and level :
 		flt = [elem for elem in ls if elem.count('/') == level]
 	else :
-		print "node and level are unspecified.."
+		print "filters nodes and level are unspecified.."
 
 	return flt
 
+
+###############################################################################
+
 ####################################
-# PROG
+# PROGRAM
 ####################################
 
 # Setup wd
 os.chdir("/home/steve/Documents/GitHub/OuranosDB/")
 
-h5folder = 'mat_files/'
-name_h5file = '16_gcm19_cnrm_cm3-sresa2-run1.mat'
-#name_h5file = 't.mat'
+h5folder= 'mat_files/'
+
+group_model = get_model_h5files (h5folder, 'gcm1_cccma_cgcm3_1-sresa1b-run1')
+name_h5file = group_h5files[1]
 
 hfile = import_h5(h5folder,name_h5file)
+
 
 # STRUCT VALIDATION (v2014 wo/ USA)
 ####################################
@@ -153,6 +188,4 @@ common_archi = Dscaling_archi
 ####################################
 
 ## Process on pres 
-ls_
-
-hdf_paths = flt_hdf_paths(flt_hdf_paths(common_archi,'fut',2),'pr')
+hdf_paths = flt_hdf_paths(common_archi,['fut','tasmin'],2)
