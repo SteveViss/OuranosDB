@@ -1,6 +1,6 @@
 # HDF5 files
 
-mat_files
+*.mat
 
 # R and python objects
 
