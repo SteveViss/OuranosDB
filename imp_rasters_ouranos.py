@@ -150,11 +150,11 @@ logging.info('Start working on %s',model)
 # STRUCT VALIDATION (v2014 wo/ USA)
 ####################################
 
-"""  TEST 1: Validate if the structure of the original Hierarchical Data
+""" UNDONE  TEST 1: Validate if the structure of the original Hierarchical Data
 Format version 5 (or HDF5) produced by MATLAB is consistent with the program
 and uncorrupted (md5sum) """
 
-"""  TEST 2:  A.Validate if the HDF5 file is covering the entire Quebec
+""" UNDONE TEST 2:  A.Validate if the HDF5 file is covering the entire Quebec
 region. B.Validate if the observed grid is consistent with the predicted grid """
 
 ### Validation: Group 'Dtrans' has the same structure than 'DScaling'
@@ -173,7 +173,7 @@ if Dtrans_archi != Dscaling_archi :
 ### MODEL DESC
 ####################################
 
-"""  TEST 4: Retrieve informations from the group 'model' and make sure
+"""UNDONE  TEST 4: Retrieve informations from the group 'model' and make sure
 these informations are already in the metadata table (PostgreSQL) """
 
 desc_model = "".join([chr(item) for item in hfile['out']['model']])
@@ -223,8 +223,10 @@ ls_scale_methods = ['Dtrans','Dscaling']
 	#for period in ls_periods:
 		#for climvar in ls_climvars:
 
+logging.info('Loading: ')
+
 scale_meth = ls_scale_methods[0]
-period = ls_periods[0]
+period = ls_periods[1]
 climvar = ls_climvars[0]
 			
 # Set filter criteria
@@ -232,23 +234,34 @@ flt_crit_dates = [scale_meth,period,climvar,'dates']
 flt_crit_data = [scale_meth,period,climvar,'data']
 
 
-# Get paths
+# Get paths 
 hdf_path_dates = flt_hdf_paths(common_archi,flt_crit_dates,4)
 hdf_path_data = flt_hdf_paths(common_archi,flt_crit_data,4)
 
+
+"""  TEST 7: Have a look on flt_hdf_paths (test if 1 element is returned) """
 if len(hdf_path_dates) != 1 :
 	logging.error('%s - lenght of hdf_path_dates should be equal to 1: %s', name_h5file, hdf_path_dates)
 
 if len(hdf_path_data) != 1 :
 	logging.error('%s - lenght of hdf_path_data should be equal to 1: %s', name_h5file, hdf_path_data)
 
-# Get dates
 
-ref_dates = hfile[hdf_path_dates[0]]
+"""  TEST 8: test number of datasets (pres or fut) """
+if period == 'pres' and hfile[hdf_path_dates[0]] != 1: 
+	logging.error('%s - pres path should have 1 dataset (one period of time)', name_h5file)
+else period == 'fut' and hfile[hdf_path_dates[0]] != 2: 
+	logging.error('%s - fut path should have 2 datasets (two periods of time)', name_h5file)
 
-# Get data
+# Get datasets
+datasets_dates = hfile[hdf_path_dates[0]]
+datasets_data = hfile[hdf_path_data[0]]
 
-ref_data = hfile[hdf_path_data[0]]
+
+#for ndataset in range(0,datasets_dates.size-1):
+
+
+
 
 # Writing last metadata info
 md_scale_method = scale_meth
