@@ -28,17 +28,17 @@ Dependencies
 Getting started
 ===============
 
-1. Create database:
+###1. Create database:
 
 	psql -h localhost -p 5432 -U user -c "CREATE DATABASE ouranos_db"
 	psql -h localhost -p 5432 -U -c "CREATE DATABASE ouranos_db;"
 	psql -h localhost -p 5432 -U -c "\i ./archi_sql/modclim_db.sql;"
 
-2. Import archi 	
+###2. Import archi 	
 
-2. Add Ouranos files (```.mat```) in mat_files folder
+###3. Add Ouranos files (```.mat```) in mat_files folder
 
-3. Execute command:
+###4. Execute command:
 
 	git clone git@github.com:SteveViss/OuranosDB.git
 	cd Ouranos
