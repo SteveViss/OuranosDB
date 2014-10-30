@@ -91,7 +91,30 @@ def get_cells_centroid_pred( hfile , out = False):
 
 	return df_centroid
 
+def get_dates_pred( hfile , hdf_path_dates, ndataset):
 
+	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	"""
+	dataset_dates_yr = hfile[hfile[hdf_path_dates[0]][ndataset,0]][0,...].astype(int)
+	dataset_dates_month = hfile[hfile[hdf_path_dates[0]][ndataset,0]][1,...].astype(int)
+	dataset_dates_day = hfile[hfile[hdf_path_dates[0]][ndataset,0]][2,...].astype(int)
+
+	dataset_fulldate = []
+
+	for date in range(0,len(dataset_dates_day)):
+		year = dataset_dates_yr[ndates].astype(str)
+		month = dataset_dates_month[ndates].astype(str)
+		day = dataset_dates_day[ndates].astype(str)
+
+		if len(month) == 1:
+			month = '0' + month
+		if len(day) == 1:
+			day = '0' + day
+
+		date = "-".join([year,month,day])
+		dataset_fulldate.append(date)
+
+	return dataset_fulldate
 
 def flt_hdf_paths(ls,nodes = None,level = None):
 
@@ -138,12 +161,12 @@ os.chdir("/home/steve/Documents/GitHub/OuranosDB/")
 h5folder= 'mat_files/'
 model = 'gcm1_cccma_cgcm3_1-sresa1b-run1' # for loop
 
-group_model = get_model_h5files(h5folder, model)
-n_regions = len(group_model)
+h5files_model = get_model_h5files(h5folder, model)
+n_regions = len(h5files_model)
 
-name_h5file = group_model['name'][0] # for loop
+h5file = h5files_model['name'][0] # for loop
 
-hfile = import_h5(h5folder,name_h5file)
+hfile = import_h5(h5folder,h5file)
 
 logging.info('Start working on %s',model)
 
@@ -223,16 +246,12 @@ ls_scale_methods = ['Dtrans','Dscaling']
 	#for period in ls_periods:
 		#for climvar in ls_climvars:
 
-logging.info('Loading: ')
-
-scale_meth = ls_scale_methods[0]
-period = ls_periods[1]
-climvar = ls_climvars[0]
+#### WARNINGS !!!! Need to be replaced when the loop will be setup
+metadata = {'scale_meth': ls_scale_methods[0], 'period': ls_periods[1], 'climvar': ls_climvars[0], 'date': ''}
 			
 # Set filter criteria
-flt_crit_dates = [scale_meth,period,climvar,'dates']
-flt_crit_data = [scale_meth,period,climvar,'data']
-
+flt_crit_dates = [metadata['scale_meth'],metadata['period'],metadata['climvar'],'dates']
+flt_crit_data = [metadata['scale_meth'],metadata['period'],metadata['climvar'],'data']
 
 # Get paths 
 hdf_path_dates = flt_hdf_paths(common_archi,flt_crit_dates,4)
@@ -248,21 +267,27 @@ if len(hdf_path_data) != 1 :
 
 
 """  TEST 8: test number of datasets (pres or fut) """
-if period == 'pres' and hfile[hdf_path_dates[0]] != 1: 
+if period == 'pres' and hfile[hdf_path_dates[0]].size != 1: 
 	logging.error('%s - pres path should have 1 dataset (one period of time)', name_h5file)
-else period == 'fut' and hfile[hdf_path_dates[0]] != 2: 
+elif period == 'fut' and hfile[hdf_path_dates[0]].size != 2: 
 	logging.error('%s - fut path should have 2 datasets (two periods of time)', name_h5file)
 
-# Get datasets
-datasets_dates = hfile[hdf_path_dates[0]]
-datasets_data = hfile[hdf_path_data[0]]
-
-
 #for ndataset in range(0,datasets_dates.size-1):
+ndataset = 0
+
+# Get dates dataset
+dataset_fulldate = get_dates_pred(hfile , hdf_path_dates, ndataset)
+
+#for date in len(dataset_fulldate):
+date = 0
+
+# Add item date in metadata dict
+metadata['date'] = dataset_fulldate[date]
+
+# Get var_clim data associated with the date
+var_clim_date = hfile[hfile[hdf_path_data[0]][ndataset,0]][...,date].tolist()
 
 
 
-
-# Writing last metadata info
-md_scale_method = scale_meth
-md_climvar = climvar
+# Get dates
+"""  TEST 9: test if nCells are equal to number of columns in datasets """
