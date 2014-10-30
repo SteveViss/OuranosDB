@@ -8,3 +8,7 @@ mat_files
 *.Rout
 *.Rdata
 *.Rhistory
+
+# log
+
+*.log

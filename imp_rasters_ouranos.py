@@ -4,10 +4,22 @@ import numpy as np
 import re
 import pandas as pd
 import psycopg2
+import logging
+import time
+
 
 ####################################
 # FUNCTIONS
 ####################################
+
+def cur_datetime(opt):
+	current_time = time.localtime()
+	if opt == 'fulldatetime': 
+		return time.strftime('%Y-%m-%dT%H:%M:%S', current_time)
+	elif opt == 'date':
+		return time.strftime('%Y-%m-%d', current_time)
+	else :
+		logging.error('cur_datetime(): opt argument is unspecified...')
 
 
 def import_h5( h5folder, name_h5file ):
@@ -20,18 +32,19 @@ def import_h5( h5folder, name_h5file ):
 		return hfile
 
 	except:
-	  	print 'ERROR: Could not open HDF5 file'
+		logging.error('import_h5(): Could not open HDF5 file')
 
 
-
-def get_model_h5files (h5folder , model):
+def get_model_h5files (h5folder , group_model):
 
 	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
 	"""
 
 	group_h5files = [f for f in os.listdir('./'+ h5folder) if os.path.isfile(os.path.join(h5folder,f)) and group_model in f]
 
-	return group_h5files
+	df_group_h5file = pd.DataFrame({'name': group_h5files,'region': [int(elem[:2]) for elem in group_h5files ]})
+
+	return df_group_h5file
 
 
 
@@ -105,12 +118,14 @@ def flt_hdf_paths(ls,nodes = None,level = None):
 	elif not nodes and level :
 		flt = [elem for elem in ls if elem.count('/') == level]
 	else :
-		print "filters nodes and level are unspecified.."
+		logging.error('flt_hdf_paths(): filters nodes and level are both unspecified..')
 
 	return flt
 
 
 ###############################################################################
+
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',filename=cur_datetime('fulldatetime')+'_import_h5.log',level=logging.error, datefmt='%m/%d/%Y %I:%M:%S %p')
 
 ####################################
 # PROGRAM
@@ -120,12 +135,16 @@ def flt_hdf_paths(ls,nodes = None,level = None):
 os.chdir("/home/steve/Documents/GitHub/OuranosDB/")
 
 h5folder= 'mat_files/'
+model = 'gcm1_cccma_cgcm3_1-sresa1b-run1' # for loop
 
-group_model = get_model_h5files (h5folder, 'gcm1_cccma_cgcm3_1-sresa1b-run1')
-name_h5file = group_h5files[1]
+group_model = get_model_h5files (h5folder, model)
+n_regions = len(group_model)
+
+name_h5file = group_model['name'][0] # for loop
 
 hfile = import_h5(h5folder,name_h5file)
 
+logging.info('Start working on %s',model)
 
 # STRUCT VALIDATION (v2014 wo/ USA)
 ####################################
@@ -137,36 +156,6 @@ and uncorrupted (md5sum) """
 """  UNIT TEST 2:  A.Validate if the HDF5 file is covering the entire Quebec
 region. B.Validate if the observed grid is consistent with the predicted grid """
 
-
-### MODEL DESC
-####################################
-
-"""  UNIT TEST 3: Retrieve informations from the group 'model' and make sure
-these informations are already in the metadata table (PostgreSQL) """
-
-model_name_ascii = hfile['out']['model']
-desc_model = "".join([chr(item) for item in model_name_ascii])
-splt_desc_model = filter(None,re.split('-',desc_model))
-
-### METADATA
-####################################
-
-md_ipcc_model = splt_desc_model[0]
-md_ipcc_scenario = splt_desc_model[1]
-md_run = splt_desc_model[2]
-
-### EXTRACT COORD
-####################################
-
-### Get centroid arraw
-hfile_cells_centroids = get_cells_centroid_pred(hfile)
-hfile_cells_bounds = get_cells_bounds_pred(hfile)
-
-"""  UNIT TEST 4: Validate if cell centroids == median(cell bounds) """
-
-### TRAITEMENT BY SCALING
-####################################
-
 ### Validation: Group 'Dtrans' has the same structure than 'DScaling'
 
 Dscaling_archi = []
@@ -175,11 +164,49 @@ hfile['out']['Dscaling'].visit(Dscaling_archi.append)
 Dtrans_archi = []
 hfile['out']['Dtrans'].visit(Dtrans_archi.append)
 
-if Dtrans_archi == Dscaling_archi is False:
-	  print('Prob with file %s: Dtrans and Dscaling (HDF architecture) are differing')
-	  sys.exit(1)
+"""  UNIT TEST 3 Validat if Dtrans and Dscaling (HDF architecture) are differing"""
+if Dtrans_archi != Dscaling_archi :
+	  logging.error('%s - Dtrans and Dscaling (HDF architecture) are differing', name_h5file)
+	  # replace by next i
 
-common_archi = Dscaling_archi
+### MODEL DESC
+####################################
+
+"""  UNIT TEST 4: Retrieve informations from the group 'model' and make sure
+these informations are already in the metadata table (PostgreSQL) """
+
+desc_model = "".join([chr(item) for item in hfile['out']['model']])
+splt_desc_model = filter(None,re.split('-',desc_model))
+
+md_ipcc_model = splt_desc_model[0]
+md_ipcc_scenario = splt_desc_model[1]
+md_run = splt_desc_model[2]
+md_code_ouranos = re.split('-|_',model)[0]
+
+splt_name_model = re.split('-',model)
+splt_desc_model[0] = md_code_ouranos + '_' + splt_desc_model[0]
+
+"""  UNIT TEST 5: Validate if name of the file is consistent with informations in hfile['out']['model'] """
+
+if splt_desc_model != splt_name_model:
+	logging.error('%s - Mismatch between filname and metadata contained (["out"]["model"]) \n \t splt_name_model : %s  != splt_desc_model: %s', name_h5file, splt_name_model,splt_desc_model)
+	# replace by next i
+
+
+### EXTRACT COORD
+####################################
+
+### Get centroid arraw
+hfile_cells_centroids = get_cells_centroid_pred(hfile)
+hfile_cells_bounds = get_cells_bounds_pred(hfile)
+
+"""  UNIT TEST 5: Validate if cell centroids == median(cell bounds) """
+
+### TRAITEMENT
+####################################
+
+common_archi = []
+hfile.visit(common_archi.append)
 
 ####################################
 ####################################
@@ -187,5 +214,26 @@ common_archi = Dscaling_archi
 ####################################
 ####################################
 
-## Process on pres 
-hdf_paths = flt_hdf_paths(common_archi,['fut','tasmin'],2)
+ls_climvars = ['tasmin','tasmax','pr']
+ls_periods = ['pres','fut']
+ls_scale_methods = ['Dtrans','Dscaling']
+
+for scale_meth in ls_scale_methods:
+	for period in ls_periods:
+		for climvar in ls_climvars:
+			
+			# writing metadata
+			md_scale_method = scale_meth
+			md_climvar = climvar
+
+			print [scale_meth,period,climvar,'dates']
+
+			hdf_path_dates = flt_hdf_paths(common_archi,[scale_meth,period,climvar, 'dates'],4)
+			hdf_path_data = flt_hdf_paths(common_archi,[scale_meth,period,climvar, 'data'],4)
+
+			if len(hdf_path_dates) != 1 :
+				logging.error('%s - lenght of hdf_path_dates should be equal to 1: %s', name_h5file, hdf_path_dates)
+
+			if len(hdf_path_data) != 1 :
+				logging.error('%s - lenght of hdf_path_data should be equal to 1: %s', name_h5file, hdf_path_data)
+

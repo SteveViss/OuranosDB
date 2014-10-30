@@ -4,7 +4,7 @@
 
 # Set wd and import file --------------------------------------------------
 
-setwd("~/Documents/GitHub/OuranosDB/bound_files/")
+setwd("~/Documents/GitHub/OuranosDB/out_files/")
 ls_files  <- list.files(getwd(),pattern=".csv")
 
 require(sp)
@@ -22,6 +22,7 @@ create_poly <- function(x){
   df_sp  <- data.frame(lon=lon,lat=lat)
   poly  <- Polygon(coords=df_sp,hole=F)
 }
+
 create_map  <- function(x){
   bound_files  <- read.csv(x)
   ls_polys  <- apply(bound_files,1,create_poly)
