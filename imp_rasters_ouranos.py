@@ -3,9 +3,10 @@ import h5py as h5
 import numpy as np
 import re
 import pandas as pd
-import psycopg2
+import psycopg2 as pg
 import logging
 import time
+import sys
 
 
 ####################################
@@ -20,6 +21,7 @@ def cur_datetime(opt):
 		return time.strftime('%Y-%m-%d', current_time)
 	else :
 		logging.error('cur_datetime(): opt argument is unspecified...')
+		sys.exit(1)
 
 
 def import_h5( h5folder, name_h5file ):
@@ -33,6 +35,7 @@ def import_h5( h5folder, name_h5file ):
 
 	except:
 		logging.error('import_h5(): Could not open HDF5 file')
+		sys.exit(1)
 
 
 def get_model_h5files (h5folder , group_model):
@@ -61,12 +64,12 @@ def get_cells_bounds_pred( hfile, out = False):
 		dict_row = {'lon_min': new_row[0,0],'lon_max': new_row[0,1],'lat_min': new_row[1,0],'lat_max': new_row[1,1]}
 		ls_bound.append(dict_row)
 
-	df_bound = pd.DataFrame(ls_bound)
 
 	if out == True:
+		df_bound = pd.DataFrame(ls_bound)
 		df_bound.to_csv("out_files/"+h5file.replace(".mat","_bound.csv"),index=False)
 
-	return df_bound
+	return ls_bound
 
 
 
@@ -84,12 +87,12 @@ def get_cells_centroid_pred( hfile , out = False):
 		dict_row = {'lon': lon_centroids,'lat': lat_centroids}
 		ls_centroid.append(dict_row)
 
-	df_centroid = pd.DataFrame(ls_centroid)
 
 	if out == True:
+		df_centroid = pd.DataFrame(ls_centroid)
 		df_centroid.to_csv("out_files/"+h5file.replace(".mat","_centroid.csv"),index=False)
 
-	return df_centroid
+	return ls_centroid
 
 def get_dates_pred( hfile , hdf_path_dates, ndataset):
 
@@ -102,9 +105,9 @@ def get_dates_pred( hfile , hdf_path_dates, ndataset):
 	dataset_fulldate = []
 
 	for date in range(0,len(dataset_dates_day)):
-		year = dataset_dates_yr[ndates].astype(str)
-		month = dataset_dates_month[ndates].astype(str)
-		day = dataset_dates_day[ndates].astype(str)
+		year = dataset_dates_yr[date].astype(str)
+		month = dataset_dates_month[date].astype(str)
+		day = dataset_dates_day[date].astype(str)
 
 		if len(month) == 1:
 			month = '0' + month
@@ -143,6 +146,7 @@ def flt_hdf_paths(ls,nodes = None,level = None):
 
 	else :
 		logging.error('flt_hdf_paths(): filters nodes and level are both unspecified..')
+		sys.exit(1)
 
 	return flt
 
@@ -191,6 +195,7 @@ hfile['out']['Dtrans'].visit(Dtrans_archi.append)
 """  TEST 3 Validat if Dtrans and Dscaling (HDF architecture) are differing"""
 if Dtrans_archi != Dscaling_archi :
 		logging.error('%s - Dtrans and Dscaling (HDF architecture) are differing', name_h5file)
+		sys.exit(1)
 		# replace by next i
 
 ### MODEL DESC
@@ -214,6 +219,7 @@ splt_desc_model[0] = md_code_ouranos + '_' + splt_desc_model[0]
 
 if splt_desc_model != splt_name_model:
 	logging.error('%s - Mismatch between filname and metadata contained (["out"]["model"]) \n \t splt_name_model : %s  != splt_desc_model: %s', name_h5file, splt_name_model,splt_desc_model)
+	sys.exit(1)
 	# replace by next i
 
 
@@ -221,8 +227,8 @@ if splt_desc_model != splt_name_model:
 ####################################
 
 ### Get centroid arraw
-hfile_cells_centroids = get_cells_centroid_pred(hfile)
-hfile_cells_bounds = get_cells_bounds_pred(hfile)
+cells_centroids = get_cells_centroid_pred(hfile)
+cells_bounds = get_cells_bounds_pred(hfile)
 
 """  TEST 6: Validate if cell centroids == median(cell bounds) """
 
@@ -259,24 +265,36 @@ hdf_path_data = flt_hdf_paths(common_archi,flt_crit_data,4)
 
 
 """  TEST 7: Have a look on flt_hdf_paths (test if 1 element is returned) """
-if len(hdf_path_dates) != 1 :
-	logging.error('%s - lenght of hdf_path_dates should be equal to 1: %s', name_h5file, hdf_path_dates)
-
-if len(hdf_path_data) != 1 :
-	logging.error('%s - lenght of hdf_path_data should be equal to 1: %s', name_h5file, hdf_path_data)
+if len(hdf_path_dates) != len(hdf_path_data) != 1:
+	logging.error('%s - lenght of hdf_path_dates or hdf_path_data should be equal to 1: %s', name_h5file, hdf_path_dates)
+	sys.exit(1)
 
 
 """  TEST 8: test number of datasets (pres or fut) """
-if period == 'pres' and hfile[hdf_path_dates[0]].size != 1: 
+if metadata['period'] == 'pres' and hfile[hdf_path_dates[0]].size != 1: 
 	logging.error('%s - pres path should have 1 dataset (one period of time)', name_h5file)
-elif period == 'fut' and hfile[hdf_path_dates[0]].size != 2: 
+	sys.exit(1)
+elif metadata['period'] == 'fut' and hfile[hdf_path_dates[0]].size != 2: 
 	logging.error('%s - fut path should have 2 datasets (two periods of time)', name_h5file)
+	sys.exit(1)
+
+
+# Loop on period 
+##################
 
 #for ndataset in range(0,datasets_dates.size-1):
 ndataset = 0
 
 # Get dates dataset
 dataset_fulldate = get_dates_pred(hfile , hdf_path_dates, ndataset)
+
+"""  TEST 9: test if nDates are equal to number of row in datasets """
+if len(dataset_fulldate) != hfile[hfile[hdf_path_data[0]][ndataset,0]][1,...].size:
+	logging.error('%s - number of observation from climatic variable dataset is different to the number of date', name_h5file)
+	sys.exit(1)
+
+# Loop on date
+##################
 
 #for date in len(dataset_fulldate):
 date = 0
@@ -287,7 +305,13 @@ metadata['date'] = dataset_fulldate[date]
 # Get var_clim data associated with the date
 var_clim_date = hfile[hfile[hdf_path_data[0]][ndataset,0]][...,date].tolist()
 
+"""  TEST 10: test if nCells are equal to number of columns in datasets """
+if len(cells_bounds) != len(var_clim_date)-1:
+	logging.error('%s - number of cells from grid informations is different to the number of cells in climatic variable dataset', name_h5file)
+	sys.exit(1)
 
 
-# Get dates
-"""  TEST 9: test if nCells are equal to number of columns in datasets """
+
+
+
+
