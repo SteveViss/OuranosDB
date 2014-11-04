@@ -28,7 +28,7 @@ SET search_path TO pg_catalog,public,modclim;
 -- object: modclim.rs_metadata_tbl | type: TABLE --
 -- DROP TABLE modclim.rs_metadata_tbl;
 CREATE TABLE modclim.rs_metadata_tbl(
-	rs_id serial NOT NULL,
+	md_id serial NOT NULL,
 	ouranos_version varchar(20),
 	ref_model_ipcc varchar(15) NOT NULL,
 	ref_scenario_ipcc varchar(15) NOT NULL,
@@ -37,9 +37,7 @@ CREATE TABLE modclim.rs_metadata_tbl(
 	is_obs boolean NOT NULL,
 	is_pred boolean NOT NULL,
 	bioclim_var varchar(20) NOT NULL,
-	date_mod date NOT NULL,
-	rs_model raster NOT NULL,
-	CONSTRAINT rs_metadata_tbl_pkey PRIMARY KEY (rs_id)
+	CONSTRAINT rs_metadata_tbl_pkey PRIMARY KEY (md_id)
 
 );
 -- ddl-end --
@@ -48,21 +46,27 @@ CREATE TABLE modclim.rs_metadata_tbl(
 CREATE UNIQUE INDEX idx_rs_metadata_pkey ON modclim.rs_metadata_tbl
 	USING btree
 	(
-	  rs_id ASC NULLS LAST
+	  md_id ASC NULLS LAST
 	);
 -- ddl-end --
 
--- object: idx_metadata_search | type: INDEX --
--- DROP INDEX modclim.idx_metadata_search;
-CREATE UNIQUE INDEX idx_metadata_search ON modclim.rs_metadata_tbl
-	USING btree
-	(
-	  ref_model_ipcc ASC NULLS LAST,
-	  ref_scenario_ipcc ASC NULLS LAST,
-	  dscaling_method ASC NULLS LAST,
-	  bioclim_var ASC NULLS LAST,
-	  date_mod ASC NULLS LAST
-	);
+
+-- object: modclim.rs_content_tbl | type: TABLE --
+-- DROP TABLE modclim.rs_content_tbl;
+CREATE TABLE modclim.rs_content_tbl(
+	md_id bigint NOT NULL,
+	rs_content raster NOT NULL,
+	rs_date date NOT NULL,
+	md_id_rs_metadata_tbl integer NOT NULL,
+	CONSTRAINT rs_content_pkey PRIMARY KEY (md_id)
+
+);
+-- ddl-end --
+-- object: rs_metadata_tbl_fk | type: CONSTRAINT --
+-- ALTER TABLE modclim.rs_content_tbl DROP CONSTRAINT rs_metadata_tbl_fk;
+ALTER TABLE modclim.rs_content_tbl ADD CONSTRAINT rs_metadata_tbl_fk FOREIGN KEY (md_id_rs_metadata_tbl)
+REFERENCES modclim.rs_metadata_tbl (md_id) MATCH FULL
+ON DELETE CASCADE ON UPDATE CASCADE;
 -- ddl-end --
 
 

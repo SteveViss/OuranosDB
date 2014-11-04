@@ -16,7 +16,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="rs_metadata_tbl">
 	<schema name="modclim"/>
 	<position x="35" y="32"/>
-	<column name="rs_id" not-null="true">
+	<column name="md_id" not-null="true">
 		<type name="serial"/>
 	</column>
 	<column name="ouranos_version">
@@ -43,41 +43,44 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="bioclim_var" not-null="true">
 		<type name="varchar" length="20"/>
 	</column>
-	<column name="date_mod" not-null="true">
-		<type name="date"/>
-	</column>
-	<column name="rs_model" not-null="true">
-		<type name="raster"/>
-	</column>
 	<constraint name="rs_metadata_tbl_pkey" type="pk-constr" factor="10" table="modclim.rs_metadata_tbl">
-		<columns names="rs_id" ref-type="src-columns"/>
+		<columns names="md_id" ref-type="src-columns"/>
 	</constraint>
 	<index name="idx_rs_metadata_pkey" table="modclim.rs_metadata_tbl"
 		 concurrent="false" unique="true" fast-update="false"
 		 index-type="btree" factor="0">
 		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="rs_id"/>
-		</idxelement>
-	</index>
-	<index name="idx_metadata_search" table="modclim.rs_metadata_tbl"
-		 concurrent="false" unique="true" fast-update="false"
-		 index-type="btree" factor="0">
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="ref_model_ipcc"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="ref_scenario_ipcc"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="dscaling_method"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="bioclim_var"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="date_mod"/>
+			<column name="md_id"/>
 		</idxelement>
 	</index>
 </table>
+
+<table name="rs_content_tbl">
+	<schema name="modclim"/>
+	<position x="393" y="83"/>
+	<column name="md_id" not-null="true">
+		<type name="bigint"/>
+	</column>
+	<column name="rs_content" not-null="true">
+		<type name="raster"/>
+	</column>
+	<column name="rs_date" not-null="true">
+		<type name="date"/>
+	</column>
+	<constraint name="rs_content_pkey" type="pk-constr" factor="10" table="modclim.rs_content_tbl">
+		<columns names="md_id" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<relationship name="rs_metadata_tbl_has_many_rs_content_tbl" type="rel1n"
+	 src-col-pattern="{sc}_{st}"
+	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
+	 src-fk-pattern="{st}_fk"
+	 col-indexes="3" constr-indexes="0"
+	 src-table="modclim.rs_metadata_tbl"
+	 dst-table="modclim.rs_content_tbl"
+	 src-required="true" dst-required="false"
+	upd-action="CASCADE"
+	del-action="CASCADE"/>
 
 </dbmodel>
