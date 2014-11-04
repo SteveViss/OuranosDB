@@ -31,9 +31,8 @@ Getting started
 #### 1. Create, prepare database and import db architecture:
 
 	psql -h localhost -p 5432 -U user -c "CREATE DATABASE ouranos_db"
-	psql -h localhost -p 5432 -U user -c "\c ouranos_db"
-	psql -h localhost -p 5432 -U user -c "CREATE EXTENSION postgis;"
-	psql -h localhost -p 5432 -U user -c "\i ./archi_sql/modclim_db.sql;"
+	psql -h localhost -p 5432 -U user -d ouranos_db -c "CREATE EXTENSION postgis;"
+	psql -h localhost -p 5432 -U user -d ouranos_db -c "\i ./archi_sql/modclim_db.sql;"
 
 
 #### 2. Add Ouranos files (```.mat```) in mat_files folder

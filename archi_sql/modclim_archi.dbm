@@ -13,32 +13,11 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <schema name="modclim" rect-visible="true" fill-color="#ffff7f">
 </schema>
 
-<table name="rs_clim_tbl">
-	<schema name="modclim"/>
-	<position x="71" y="144"/>
-	<column name="rs_id" not-null="true">
-		<type name="bigint"/>
-	</column>
-	<column name="rs_mod" not-null="true">
-		<type name="raster"/>
-	</column>
-	<constraint name="rs_clim_tbl_pkey" type="pk-constr" factor="10" table="modclim.rs_clim_tbl">
-		<columns names="rs_id" ref-type="src-columns"/>
-	</constraint>
-	<index name="idx_rs_clim_tbl_pkey" table="modclim.rs_clim_tbl"
-		 concurrent="false" unique="false" fast-update="false"
-		 index-type="btree" factor="0">
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="rs_id"/>
-		</idxelement>
-	</index>
-</table>
-
 <table name="rs_metadata_tbl">
 	<schema name="modclim"/>
-	<position x="465" y="99"/>
+	<position x="35" y="32"/>
 	<column name="rs_id" not-null="true">
-		<type name="bigint"/>
+		<type name="serial"/>
 	</column>
 	<column name="ouranos_version">
 		<type name="varchar" length="20"/>
@@ -66,6 +45,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<column name="date_mod" not-null="true">
 		<type name="date"/>
+	</column>
+	<column name="rs_model" not-null="true">
+		<type name="raster"/>
 	</column>
 	<constraint name="rs_metadata_tbl_pkey" type="pk-constr" factor="10" table="modclim.rs_metadata_tbl">
 		<columns names="rs_id" ref-type="src-columns"/>
@@ -97,14 +79,5 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		</idxelement>
 	</index>
 </table>
-
-<relationship name="rs_clim_tbl_has_one_rs_metadata_tbl" type="rel11"
-	 src-col-pattern="{sc}_{st}"
-	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
-	 src-fk-pattern="{st}_fk"
-	 col-indexes="2" constr-indexes="1,2"
-	 src-table="modclim.rs_metadata_tbl"
-	 dst-table="modclim.rs_clim_tbl"
-	 src-required="true" dst-required="false"/>
 
 </dbmodel>

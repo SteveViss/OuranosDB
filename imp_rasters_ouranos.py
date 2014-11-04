@@ -7,6 +7,9 @@ import psycopg2 as pg
 import logging
 import time
 import sys
+from osgeo import gdal
+from osgeo import gdal_array
+from osgeo import osr
 
 
 ####################################
@@ -47,6 +50,7 @@ def get_model_h5files (h5folder , group_model):
 
 	df_group_h5file = pd.DataFrame({'name': group_h5files,'region': [int(elem[:2]) for elem in group_h5files ]})
 	df_group_h5file = df_group_h5file.sort(['region'])
+	df_group_h5file.index = range(0,len(df_group_h5file))
 
 	return df_group_h5file
 
@@ -100,7 +104,8 @@ def get_dates_pred( hfile , metadata,ndataset):
 
 	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
 	"""
-	hdf_path_dates = "/".join(['out',metadata['scale_meth'],metadata['period'],metadata['climvar'],'dates'])
+
+	hdf_path_dates = "/".join(['out',metadata['scale_meth'],metadata['period'],'pr','dates'])
 
 	ls_fulldate = []
 
@@ -124,7 +129,7 @@ def get_dates_pred( hfile , metadata,ndataset):
 
 	return ls_fulldate
 
-def get_clim_var_pred( hfile , metadata, dat, ndataset):
+def get_clim_var_pred( hfile , metadata, date, ndataset):
 
 	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
 	"""
@@ -138,6 +143,34 @@ def get_clim_var_pred( hfile , metadata, dat, ndataset):
 		ls_climvar.append(dataset_clim_date[n])
 
 	return ls_climvar
+
+def get_write_del_doublons(dict_out_climvars,delete=True):
+
+	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	"""
+
+	dict_dup_climvars = {'pr':pd.DataFrame(),'tasmin':pd.DataFrame(),'tasmax':pd.DataFrame()}
+
+	for item in dict_out_climvars:
+		dict_dup_climvars[item] = dict_out_climvars[item][dict_out_climvars[item].duplicated(['lat','lon'])]
+
+		if not dict_dup_climvars[item].empty:
+			dict_dup_climvars[item].to_csv("out_files/"+model+"_doublons_"+item+".csv",index=False)
+
+		if delete == True:
+			dict_dup_climvars[item] = dict_out_climvars[item].drop_duplicates(['lat','lon'])
+
+def get_model_mdata(hfile,metadata):
+
+	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	"""
+
+	desc_model =  filter(None,re.split('-',"".join([chr(item) for item in hfile['out']['model']])))
+
+	metadata['model_ipcc'] = desc_model[0]
+	metadata['scenario_ipcc']  = desc_model[1]
+	metadata['run_ipcc'] = desc_model[2]
+	metadata['mod_code_ouranos'] = re.split('-|_',model)[0]
 
 
 ###############################################################################
@@ -158,52 +191,93 @@ ls_climvars = ['tasmin','tasmax','pr']
 ls_periods = ['pres','fut']
 ls_scale_methods = ['Dtrans','Dscaling']
 
+
 h5files_model = get_model_h5files(h5folder, model)
 
 #for scale_meth in ls_scale_methods:
-	#for period in ls_periods:
-		#for climvar in ls_climvars:
+#for period in ls_periods:
 
-#### WARNINGS !!!! Need to be replaced when the loop will be setup
-metadata = {'scale_meth': ls_scale_methods[0], 'period': ls_periods[1],
- 'climvar': ls_climvars[0], 'date': '', 'is_obs': False, 'is_pred': True}
+scale_method = ls_scale_methods[0]
+period = ls_periods[1]
 
-logging.info('METADATA: %s')
+metadata = {'model_ipcc':'','scenario_ipcc':'','run_ipcc':'','mod_code_ouranos':'','scale_meth': scale_method, 'period': period, 'climvar': '', 'date': '', 'is_obs': False, 'is_pred': True}
+
+logging.info('METADATA: %s',model)
 logging.info('\t Scaling method: %s',metadata['scale_meth'])
 logging.info('\t Time period: %s',metadata['period'])
-logging.info('\t Climatic variable: %s',metadata['climvar'])
 
+# Adjust struct by period
 if metadata['period'] == 'fut':
 	ndatasets = 2 
 if metadata['period'] == 'pres':
 	ndatasets = 1
 
-
 #for ndataset in range(0,ndatasets):
-# Get dates_reference
+#Get dates_reference
+ndataset = 0
 ref_hfile =  import_h5(h5folder,h5files_model['name'][0])
 dates = get_dates_pred(ref_hfile , metadata,ndataset)
 
 # Loop over dates
 #for dat in range(0,len(dates)):
-dat=0
-
+dat = 0
 metadata['date'] = dates[dat]
 logging.info('\t Date: %s',metadata['date'])
 
+dict_out_climvars = {'pr': pd.DataFrame() ,'tasmin': pd.DataFrame() ,'tasmax': pd.DataFrame()}
 
-# Loop over files
-#for id_file range(0,len(h5files_model)):
-id_file = 0
+#Loop over climvar
+for climvar in ls_climvars:
+	logging.info('\t Climatic variable: %s',climvar)
+	metadata['climvar'] = climvar
 
-logging.info('Start process on h5file: %s',h5files_model['name'][id_file])
+	# Loop over files
+	for id_file in range(0,len(h5files_model)):
+			
+		hfile = import_h5(h5folder,h5files_model['name'][id_file])
 
-# Adjust struct by period
+		# fill metadata
+		get_model_mdata(hfile,metadata)
 
-hfile = import_h5(h5folder,h5files_model['name'][id_file])
-clim_var = get_clim_var_pred( hfile , metadata, dat, ndataset)
-coord_cells = get_cells_centroid_pred(hfile)
+		# Request data (clim, coords)
+		clim_var = get_clim_var_pred( hfile , metadata, dat, ndataset)
+		coord_cells = get_cells_centroid_pred(hfile)
 
+		df_out = pd.DataFrame(coord_cells)
+		df_out[climvar] = clim_var
 
+		dict_out_climvars[climvar] = dict_out_climvars[climvar].append(df_out)
 
+get_write_del_doublons(dict_out_climvars)
 
+# merge and reshape all climatic variable dataframe
+df_merge_all_climvars = pd.merge(dict_out_climvars['pr'],dict_out_climvars['tasmin'],on=['lat','lon'])
+df_merge_all_climvars = pd.merge(df_merge_all_climvars,dict_out_climvars['tasmax'],on=['lat','lon'])
+#df_merge_all_climvars.to_csv('./out_files/verif_raster'+metadata['date']+'.csv',index=False)
+
+arr = df_merge_all_climvars.pivot(index='lat', columns='lon', values='pr')
+arr = arr.fillna(-99999.99)
+
+xres = arr.columns[1] - arr.columns[0]
+yres = arr.index[1] - arr.index[0]
+
+ysize = len(arr.index[:])
+xsize = len(arr.columns[:])
+
+uly = arr.index[-1] - (yres / 2.)
+ulx = arr.columns[0] - (xres / 2.)
+
+driver = gdal.GetDriverByName('GTiff')
+ds = driver.Create("./out_files/test_rs.tif", xsize, ysize, 1, gdal.GDT_Float32)
+
+# this assumes the projection is Geographic lat/lon WGS 84
+srs = osr.SpatialReference()
+srs.ImportFromEPSG(4326)
+ds.SetProjection(srs.ExportToWkt())
+
+gt = [ulx, xres, 0, uly, 0, yres ]
+ds.SetGeoTransform(gt)
+
+outband = ds.GetRasterBand(1)
+outband.WriteArray(arr.as_matrix())
+outband.SetNoDataValue(-99999.99)
