@@ -7,9 +7,7 @@ import psycopg2 as pg
 import logging
 import time
 import sys
-from osgeo import gdal
-from osgeo import gdal_array
-from osgeo import osr
+import psycopg2
 
 
 ####################################
@@ -129,7 +127,7 @@ def get_dates_pred( hfile , metadata,ndataset):
 
 	return ls_fulldate
 
-def get_clim_var_pred( hfile , metadata, date, ndataset):
+def get_clim_var_pred( hfile , metadata, climvar, date, ndataset):
 
 	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
 	"""
@@ -160,6 +158,8 @@ def get_write_del_doublons(dict_out_climvars,delete=True):
 		if delete == True:
 			dict_dup_climvars[item] = dict_out_climvars[item].drop_duplicates(['lat','lon'])
 
+	return dict_out_climvars
+
 def get_model_mdata(hfile,metadata):
 
 	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
@@ -172,6 +172,39 @@ def get_model_mdata(hfile,metadata):
 	metadata['run_ipcc'] = desc_model[2]
 	metadata['mod_code_ouranos'] = re.split('-|_',model)[0]
 
+def merge_dict_in_df(dict_out_climvars,out=False):
+
+	# merge and reshape all climatic variable in panda dataframe
+	df_merge_all_climvars = pd.merge(dict_out_climvars['pr'],dict_out_climvars['tasmin'],on=['lat','lon'])
+	df_merge_all_climvars = pd.merge(df_merge_all_climvars,dict_out_climvars['tasmax'],on=['lat','lon'])
+	
+	if out == True:
+		df_merge_all_climvars.to_csv('./out_files/'+metadata['model']+'_verif_raster'+metadata['date']+'.csv',index=False)
+
+	return df_merge_all_climvars
+
+def write_rs(df_merge_all_climvars,metadata,ls_climvar):
+
+	for climvar in ls_climvars:
+		arr = df_merge_all_climvars.pivot(index='lat', columns='lon', values=climvar)
+		arr = arr.sort_index(axis=0,ascending=False)
+
+		ysize = len(arr.index[:])
+		xsize = len(arr.columns[:])
+		lly = arr.index[-1]
+		llx = arr.columns[0]
+		res = arr.columns[1] - arr.columns[0]
+		no_dat_val = 9.999999999900000694e+04
+		arr = arr.fillna(no_dat_val)
+
+		with file("./out_files/"+"_".join([climvar,metadata['model_ipcc'],metadata['date']+'.asc']),'w') as asc_out:
+			asc_out.write('NCOLS '+str(xsize)+'\n')
+			asc_out.write('NROWS '+str(ysize)+'\n')
+			asc_out.write('XLLCENTER '+str(llx)+'\n')
+			asc_out.write('YLLCENTER '+str(lly)+'\n')
+			asc_out.write('CELLSIZE '+str(res)+'\n')
+			asc_out.write('NODATA_VALUE '+str(no_dat_val)+'\n')
+			np.savetxt(asc_out, arr.as_matrix(), delimiter=' ')
 
 ###############################################################################
 
@@ -191,8 +224,12 @@ ls_climvars = ['tasmin','tasmax','pr']
 ls_periods = ['pres','fut']
 ls_scale_methods = ['Dtrans','Dscaling']
 
-
 h5files_model = get_model_h5files(h5folder, model)
+h5files = {}
+
+#Load hfiles
+for id_file in range(0,len(h5files_model)):
+	h5files[h5files_model['region'][id_file]] = import_h5(h5folder,h5files_model['name'][id_file])
 
 #for scale_meth in ls_scale_methods:
 #for period in ls_periods:
@@ -213,14 +250,16 @@ if metadata['period'] == 'pres':
 	ndatasets = 1
 
 #for ndataset in range(0,ndatasets):
-#Get dates_reference
 ndataset = 0
-ref_hfile =  import_h5(h5folder,h5files_model['name'][0])
-dates = get_dates_pred(ref_hfile , metadata,ndataset)
+
+
+#Get dates_reference
+dates = get_dates_pred(h5files[1],metadata,ndataset)
+
 
 # Loop over dates
-#for dat in range(0,len(dates)):
-dat = 0
+#for date in range(0,len(dates)):
+date = 0
 metadata['date'] = dates[dat]
 logging.info('\t Date: %s',metadata['date'])
 
@@ -230,54 +269,33 @@ dict_out_climvars = {'pr': pd.DataFrame() ,'tasmin': pd.DataFrame() ,'tasmax': p
 for climvar in ls_climvars:
 	logging.info('\t Climatic variable: %s',climvar)
 	metadata['climvar'] = climvar
-
 	# Loop over files
-	for id_file in range(0,len(h5files_model)):
-			
-		hfile = import_h5(h5folder,h5files_model['name'][id_file])
+
+	for hfile in h5files:
 
 		# fill metadata
-		get_model_mdata(hfile,metadata)
+		get_model_mdata(h5files[hfile],metadata)
 
 		# Request data (clim, coords)
-		clim_var = get_clim_var_pred( hfile , metadata, dat, ndataset)
-		coord_cells = get_cells_centroid_pred(hfile)
+		clim_var = get_clim_var_pred(h5files[hfile], metadata, climvar, date, ndataset)
+		coord_cells = get_cells_centroid_pred(h5files[hfile])
 
 		df_out = pd.DataFrame(coord_cells)
 		df_out[climvar] = clim_var
 
 		dict_out_climvars[climvar] = dict_out_climvars[climvar].append(df_out)
 
-get_write_del_doublons(dict_out_climvars)
+dict_out_climvars = get_write_del_doublons(dict_out_climvars)
+df_merge_all_climvars = merge_dict_in_df(dict_out_climvars)
+write_rs(df_merge_all_climvars,metadata,ls_climvars)
 
-# merge and reshape all climatic variable dataframe
-df_merge_all_climvars = pd.merge(dict_out_climvars['pr'],dict_out_climvars['tasmin'],on=['lat','lon'])
-df_merge_all_climvars = pd.merge(df_merge_all_climvars,dict_out_climvars['tasmax'],on=['lat','lon'])
-#df_merge_all_climvars.to_csv('./out_files/verif_raster'+metadata['date']+'.csv',index=False)
+# write in postgreSQL database
 
-arr = df_merge_all_climvars.pivot(index='lat', columns='lon', values='pr')
-arr = arr.fillna(-99999.99)
+conn = psycopg2.connect("host=localhost port=5433 dbname=ouranos_db_dev user=postgres")
 
-xres = arr.columns[1] - arr.columns[0]
-yres = arr.index[1] - arr.index[0]
+for climvar in ls_climvars:
+	cur = conn.cursor()
+	cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
+	conn.commit()
 
-ysize = len(arr.index[:])
-xsize = len(arr.columns[:])
-
-uly = arr.index[-1] - (yres / 2.)
-ulx = arr.columns[0] - (xres / 2.)
-
-driver = gdal.GetDriverByName('GTiff')
-ds = driver.Create("./out_files/test_rs.tif", xsize, ysize, 1, gdal.GDT_Float32)
-
-# this assumes the projection is Geographic lat/lon WGS 84
-srs = osr.SpatialReference()
-srs.ImportFromEPSG(4326)
-ds.SetProjection(srs.ExportToWkt())
-
-gt = [ulx, xres, 0, uly, 0, yres ]
-ds.SetGeoTransform(gt)
-
-outband = ds.GetRasterBand(1)
-outband.WriteArray(arr.as_matrix())
-outband.SetNoDataValue(-99999.99)
+# retrive md_id
