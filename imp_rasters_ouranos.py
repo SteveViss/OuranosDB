@@ -3,12 +3,10 @@ import h5py as h5
 import numpy as np
 import re
 import pandas as pd
-import psycopg2 as pg
+import psycopg2
 import logging
 import time
 import sys
-import psycopg2
-import raster2pgsql as rpy
 
 ####################################
 # FUNCTIONS
@@ -251,13 +249,17 @@ for scale_method in ls_scale_methods:
 		if metadata['period'] == 'pres':
 			ndatasets = 1
 
+
+		# fill metadata
+		get_model_mdata(h5files[1],metadata)
+
 		for ndataset in range(0,ndatasets):
 
 			#Get dates_reference
 			dates = get_dates_pred(h5files[1],metadata,ndataset)
 
 			# Loop over dates
-			for date in range(0,10):
+			for date in range(0,5):
 				metadata['date'] = dates[date]
 				logging.info('\t Date: %s',metadata['date'])
 
@@ -272,9 +274,6 @@ for scale_method in ls_scale_methods:
 					# Loop over files
 					for hfile in h5files:
 
-						# fill metadata
-						get_model_mdata(h5files[hfile],metadata)
-
 						# Request data (clim, coords)
 						clim_var = get_clim_var_pred(h5files[hfile], metadata, climvar, date, ndataset)
 						coord_cells = get_cells_centroid_pred(h5files[hfile])
@@ -288,51 +287,50 @@ for scale_method in ls_scale_methods:
 				df_merge_all_climvars = merge_dict_in_df(dict_out_climvars)
 				write_rs(df_merge_all_climvars,metadata,ls_climvars)
 
-				# write metadata in postgreSQL database
+				# generate INSERT with raster2pgsql 
+				ls_asc_files = [f for f in os.listdir('./out_files/') if '.asc' in f]
+				dict_hex = {'pr':'','tasmin':'','tasmax':''}
 
-				if date == 0:
-					for climvar in ls_climvars:
-						cur = conn.cursor()
-						cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
-						cur.close()
-					logging.info('METADATA importation SUCCEED !')
+				for asc_file in ls_asc_files:
+					command = 'python ./raster2pgsql.py -a -s 4326 -r ./out_files/'+asc_file+' -t modclim.rs_content_tbl -f rs_content > ./out_files/' + asc_file.replace(".asc",".sql")
+					os.system(command)
+
+					# Get hex code
+					insert_line=open('./out_files/'+asc_file.replace(".asc",".sql")).readlines()[1]
+					hex_code = re.findall(r'\'(.*?)\'', insert_line)
+
+					#Store hex code
+					climvar_file = re.split('_',asc_file)[0]
+					dict_hex[climvar_file] = hex_code[0]
+
+				# Clean out_files folder
+				os.system('rm ./out_files/*.sql')
+				os.system('rm ./out_files/*.asc')
 
 
-				# retrieve individual md_id by climvar
+				# update individual md_id by climvar
 				if date == 0:
 					cur = conn.cursor()
 					cur.execute("SELECT bioclim_var, md_id FROM modclim.rs_metadata_tbl WHERE ouranos_version = %s AND ref_model_ipcc = %s AND ref_scenario_ipcc = %s AND run = %s AND dscaling_method = %s AND is_obs = %s AND is_pred = %s;",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred']))
 					md_id_vars = cur.fetchall()
 					dict_md_id_vars = dict(md_id_vars)
 
-				# generate INSERT with raster2pgsql 
-
-				if date == 0:
-					ls_asc_files = [f for f in os.listdir('./out_files/') if '.asc' in f]
-					dict_hex = {'pr':'','tasmin':'','tasmax':''}
-
-					for asc_file in ls_asc_files:
-						command = 'python ./raster2pgsql.py -a -s 4326 -r ./out_files/'+asc_file+' -t modclim.rs_content_tbl -f rs_content > ./out_files/' + asc_file.replace(".asc",".sql")
-						os.system(command)
-
-						# Get hex code
-						insert_line=open('./out_files/'+asc_file.replace(".asc",".sql")).readlines()[1]
-						hex_code = re.findall(r'\'(.*?)\'', insert_line)
-
-						#Store hex code
-						climvar_file = re.split('_',asc_file)[0]
-						dict_hex[climvar_file] = hex_code[0]
-
-				# Clean out_files folder
-				os.system('rm ./out_files/*.sql')
-				os.system('rm ./out_files/*.asc')
-
 				for climvar in ls_climvars:
 					cur = conn.cursor()
 					cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, rs_content ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
 					cur.close()
-				logging.info('RASTER importation done !')
 				
+				logging.info('RASTER importation done !')
 				conn.commit()
+
+	# Insert metadata in PostgreSQL DB
+
+	for climvar in ls_climvars:
+		cur = conn.cursor()
+		cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
+		cur.close()
+	logging.info('METADATA importation SUCCEED !')
+	
+	conn.commit()			
 
 conn.close()

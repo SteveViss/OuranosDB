@@ -1,10 +1,9 @@
-# HDF5 files
-
+# HDF5 and raster files
 *.mat
+*.asc
 
 # R and python objects
 
-*.pyc
 *.Rout
 *.Rdata
 *.Rhistory
