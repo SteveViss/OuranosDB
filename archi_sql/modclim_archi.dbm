@@ -15,7 +15,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <table name="rs_metadata_tbl">
 	<schema name="modclim"/>
-	<position x="35" y="32"/>
+	<position x="34" y="32"/>
 	<column name="md_id" not-null="true">
 		<type name="serial"/>
 	</column>
@@ -46,6 +46,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<constraint name="rs_metadata_tbl_pkey" type="pk-constr" factor="10" table="modclim.rs_metadata_tbl">
 		<columns names="md_id" ref-type="src-columns"/>
 	</constraint>
+	<constraint name="mdata_const_uq" type="uq-constr" factor="10" table="modclim.rs_metadata_tbl">
+		<columns names="ouranos_version,ref_model_ipcc,ref_scenario_ipcc,run,dscaling_method,is_obs,is_pred,bioclim_var" ref-type="src-columns"/>
+	</constraint>
 	<index name="idx_rs_metadata_pkey" table="modclim.rs_metadata_tbl"
 		 concurrent="false" unique="true" fast-update="false"
 		 index-type="btree" factor="0">
@@ -53,13 +56,41 @@ CAUTION: Do not modify this file unless you know what you are doing.
 			<column name="md_id"/>
 		</idxelement>
 	</index>
+	<index name="idx_rs_metadata_uq" table="modclim.rs_metadata_tbl"
+		 concurrent="false" unique="true" fast-update="false"
+		 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="ouranos_version"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="ref_model_ipcc"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="ref_scenario_ipcc"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="run"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="dscaling_method"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="is_obs"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="is_pred"/>
+		</idxelement>
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="bioclim_var"/>
+		</idxelement>
+	</index>
 </table>
 
 <table name="rs_content_tbl">
 	<schema name="modclim"/>
-	<position x="393" y="83"/>
+	<position x="392" y="83"/>
 	<column name="md_id" not-null="true">
-		<type name="bigint"/>
+		<type name="serial"/>
 	</column>
 	<column name="rs_content" not-null="true">
 		<type name="raster"/>

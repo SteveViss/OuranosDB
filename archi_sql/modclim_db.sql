@@ -37,7 +37,8 @@ CREATE TABLE modclim.rs_metadata_tbl(
 	is_obs boolean NOT NULL,
 	is_pred boolean NOT NULL,
 	bioclim_var varchar(20) NOT NULL,
-	CONSTRAINT rs_metadata_tbl_pkey PRIMARY KEY (md_id)
+	CONSTRAINT rs_metadata_tbl_pkey PRIMARY KEY (md_id),
+	CONSTRAINT mdata_const_uq UNIQUE (ouranos_version,ref_model_ipcc,ref_scenario_ipcc,run,dscaling_method,is_obs,is_pred,bioclim_var)
 
 );
 -- ddl-end --
@@ -50,11 +51,27 @@ CREATE UNIQUE INDEX idx_rs_metadata_pkey ON modclim.rs_metadata_tbl
 	);
 -- ddl-end --
 
+-- object: idx_rs_metadata_uq | type: INDEX --
+-- DROP INDEX modclim.idx_rs_metadata_uq;
+CREATE UNIQUE INDEX idx_rs_metadata_uq ON modclim.rs_metadata_tbl
+	USING btree
+	(
+	  ouranos_version ASC NULLS LAST,
+	  ref_model_ipcc ASC NULLS LAST,
+	  ref_scenario_ipcc ASC NULLS LAST,
+	  run ASC NULLS LAST,
+	  dscaling_method ASC NULLS LAST,
+	  is_obs ASC NULLS LAST,
+	  is_pred ASC NULLS LAST,
+	  bioclim_var ASC NULLS LAST
+	);
+-- ddl-end --
+
 
 -- object: modclim.rs_content_tbl | type: TABLE --
 -- DROP TABLE modclim.rs_content_tbl;
 CREATE TABLE modclim.rs_content_tbl(
-	md_id bigint NOT NULL,
+	md_id serial NOT NULL,
 	rs_content raster NOT NULL,
 	rs_date date NOT NULL,
 	md_id_rs_metadata_tbl integer NOT NULL,
