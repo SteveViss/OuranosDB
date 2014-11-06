@@ -71,14 +71,24 @@ CREATE UNIQUE INDEX idx_rs_metadata_uq ON modclim.rs_metadata_tbl
 -- object: modclim.rs_content_tbl | type: TABLE --
 -- DROP TABLE modclim.rs_content_tbl;
 CREATE TABLE modclim.rs_content_tbl(
-	md_id serial NOT NULL,
-	rs_content raster NOT NULL,
+	rs_id serial NOT NULL,
+	raster raster NOT NULL,
 	rs_date date NOT NULL,
 	md_id_rs_metadata_tbl integer NOT NULL,
-	CONSTRAINT rs_content_pkey PRIMARY KEY (md_id)
+	CONSTRAINT rs_content_pkey PRIMARY KEY (rs_id)
 
 );
 -- ddl-end --
+-- object: idx_rs_content_pkey | type: INDEX --
+-- DROP INDEX modclim.idx_rs_content_pkey;
+CREATE INDEX idx_rs_content_pkey ON modclim.rs_content_tbl
+	USING btree
+	(
+	  rs_id ASC NULLS LAST
+	);
+-- ddl-end --
+
+
 -- object: rs_metadata_tbl_fk | type: CONSTRAINT --
 -- ALTER TABLE modclim.rs_content_tbl DROP CONSTRAINT rs_metadata_tbl_fk;
 ALTER TABLE modclim.rs_content_tbl ADD CONSTRAINT rs_metadata_tbl_fk FOREIGN KEY (md_id_rs_metadata_tbl)

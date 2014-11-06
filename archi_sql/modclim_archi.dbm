@@ -92,7 +92,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="rs_id" not-null="true">
 		<type name="serial"/>
 	</column>
-	<column name="rs_content" not-null="true">
+	<column name="raster" not-null="true">
 		<type name="raster"/>
 	</column>
 	<column name="rs_date" not-null="true">
@@ -101,13 +101,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<constraint name="rs_content_pkey" type="pk-constr" factor="10" table="modclim.rs_content_tbl">
 		<columns names="rs_id" ref-type="src-columns"/>
 	</constraint>
-	<index name="idx_gist_raster" table="modclim.rs_content_tbl"
-		 concurrent="false" unique="false" fast-update="false"
-		 index-type="gist" factor="0">
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="rs_content"/>
-		</idxelement>
-	</index>
 	<index name="idx_rs_content_pkey" table="modclim.rs_content_tbl"
 		 concurrent="false" unique="false" fast-update="false"
 		 index-type="btree" factor="0">

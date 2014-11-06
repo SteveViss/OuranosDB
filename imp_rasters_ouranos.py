@@ -326,7 +326,7 @@ for scale_method in ls_scale_methods:
 
 				for climvar in ls_climvars:
 					cur = conn.cursor()
-					cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, rs_content ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
+					cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, raster ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
 					cur.close()
 				
 				logging.info('RASTER importation done !')
