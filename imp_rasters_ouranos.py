@@ -250,8 +250,17 @@ for scale_method in ls_scale_methods:
 			ndatasets = 1
 
 
-		# fill metadata
+		# fill metadata in dict
 		get_model_mdata(h5files[1],metadata)
+
+		# Insert metadata in PostgreSQL DB
+		if period == ls_periods[0]:
+			for climvar in ls_climvars:
+				cur = conn.cursor()
+				cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
+				cur.close()
+			logging.info('METADATA importation SUCCEED !')
+
 
 		for ndataset in range(0,ndatasets):
 
@@ -321,16 +330,6 @@ for scale_method in ls_scale_methods:
 					cur.close()
 				
 				logging.info('RASTER importation done !')
-				conn.commit()
-
-	# Insert metadata in PostgreSQL DB
-
-	for climvar in ls_climvars:
-		cur = conn.cursor()
-		cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
-		cur.close()
-	logging.info('METADATA importation SUCCEED !')
-	
-	conn.commit()			
+				conn.commit()	
 
 conn.close()

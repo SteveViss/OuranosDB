@@ -89,7 +89,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="rs_content_tbl">
 	<schema name="modclim"/>
 	<position x="392" y="83"/>
-	<column name="md_id" not-null="true">
+	<column name="rs_id" not-null="true">
 		<type name="serial"/>
 	</column>
 	<column name="rs_content" not-null="true">
@@ -99,8 +99,22 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="date"/>
 	</column>
 	<constraint name="rs_content_pkey" type="pk-constr" factor="10" table="modclim.rs_content_tbl">
-		<columns names="md_id" ref-type="src-columns"/>
+		<columns names="rs_id" ref-type="src-columns"/>
 	</constraint>
+	<index name="idx_gist_raster" table="modclim.rs_content_tbl"
+		 concurrent="false" unique="false" fast-update="false"
+		 index-type="gist" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="rs_content"/>
+		</idxelement>
+	</index>
+	<index name="idx_rs_content_pkey" table="modclim.rs_content_tbl"
+		 concurrent="false" unique="false" fast-update="false"
+		 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="rs_id"/>
+		</idxelement>
+	</index>
 </table>
 
 <relationship name="rs_metadata_tbl_has_many_rs_content_tbl" type="rel1n"
