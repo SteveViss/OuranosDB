@@ -268,20 +268,18 @@ for scale_method in ls_scale_methods:
 			dates = get_dates_pred(h5files[1],metadata,ndataset)
 
 			# Loop over dates
-			for date in range(0,5):
+			for date in range(0,len(dates)):
 				metadata['date'] = dates[date]
 				logging.info('\t Date: %s',metadata['date'])
 
 				dict_out_climvars = {'pr': pd.DataFrame() ,'tasmin': pd.DataFrame() ,'tasmax': pd.DataFrame()}
 
+				# Loop over files
+				for hfile in h5files:
 
-				#Loop over climvar
-				for climvar in ls_climvars:
-					logging.info('\t Climatic variable: %s',climvar)
-					metadata['climvar'] = climvar
-
-					# Loop over files
-					for hfile in h5files:
+					#Loop over climvar
+					for climvar in ls_climvars:
+						metadata['climvar'] = climvar
 
 						# Request data (clim, coords)
 						clim_var = get_clim_var_pred(h5files[hfile], metadata, climvar, date, ndataset)
@@ -329,7 +327,6 @@ for scale_method in ls_scale_methods:
 					cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, raster ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
 					cur.close()
 				
-				logging.info('RASTER importation done !')
 				conn.commit()	
 
 conn.close()
