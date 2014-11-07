@@ -299,7 +299,7 @@ for scale_method in ls_scale_methods:
 				dict_hex = {'pr':'','tasmin':'','tasmax':''}
 
 				for asc_file in ls_asc_files:
-					command = 'python ./raster2pgsql.py -a -s 4326 -r ./out_files/'+asc_file+' -t modclim.rs_content_tbl -f rs_content > ./out_files/' + asc_file.replace(".asc",".sql")
+					command = 'python ./raster2pgsql.py -a -C -s 4326 -r ./out_files/'+asc_file+' -t modclim.rs_content_tbl -f rs_content > ./out_files/' + asc_file.replace(".asc",".sql")
 					os.system(command)
 
 					# Get hex code
