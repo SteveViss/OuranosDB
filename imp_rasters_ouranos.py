@@ -253,7 +253,7 @@ for scale_method in ls_scale_methods:
 		# fill metadata in dict
 		get_model_mdata(h5files[1],metadata)
 
-		# Insert metadata in PostgreSQL DB
+		## Insert metadata in PostgreSQL DB
 		if period == ls_periods[0]:
 			for climvar in ls_climvars:
 				cur = conn.cursor()
@@ -299,7 +299,7 @@ for scale_method in ls_scale_methods:
 				dict_hex = {'pr':'','tasmin':'','tasmax':''}
 
 				for asc_file in ls_asc_files:
-					command = 'python ./raster2pgsql.py -a -C -s 4326 -r ./out_files/'+asc_file+' -t modclim.rs_content_tbl -f rs_content > ./out_files/' + asc_file.replace(".asc",".sql")
+					command = 'python ./raster2pgsql.py -a -s 4326 -r ./out_files/'+asc_file+' -t modclim.rs_content_tbl -f rs_content > ./out_files/' + asc_file.replace(".asc",".sql")
 					os.system(command)
 
 					# Get hex code
@@ -315,7 +315,7 @@ for scale_method in ls_scale_methods:
 				os.system('rm ./out_files/*.asc')
 
 
-				# update individual md_id by climvar
+				#update individual md_id by climvar
 				if date == 0:
 					cur = conn.cursor()
 					cur.execute("SELECT bioclim_var, md_id FROM modclim.rs_metadata_tbl WHERE ouranos_version = %s AND ref_model_ipcc = %s AND ref_scenario_ipcc = %s AND run = %s AND dscaling_method = %s AND is_obs = %s AND is_pred = %s;",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred']))

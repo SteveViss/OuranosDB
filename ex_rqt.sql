@@ -24,3 +24,13 @@ INNER JOIN modclim.rs_metadata_tbl ON modclim.rs_content_tbl.md_id_rs_metadata_t
 GROUP BY rs_metadata_tbl.bioclim_var,extract(month from rs_content_tbl.rs_date),extract(year from rs_content_tbl.rs_date));
 
 SELECT (stats).* FROM (SELECT ST_SummaryStats(UnionT) AS stats FROM modclim.testMonthlyUnion) As foo;
+
+-- Get one raster
+
+DROP MATERIALIZED VIEW modclim.testUnion;
+CREATE MATERIALIZED VIEW modclim.testUnion AS (
+	SELECT rs_metadata_tbl.bioclim_var,extract(month from rs_content_tbl.rs_date) as Month_date,
+	extract(year from rs_content_tbl.rs_date) as Year_date,
+	ST_Union(raster, 'MEAN') AS UnionT FROM modclim.rs_content_tbl
+	INNER JOIN modclim.rs_metadata_tbl ON modclim.rs_content_tbl.md_id_rs_metadata_tbl = modclim.rs_metadata_tbl.md_id
+	WHERE rs_metadata_tbl.bioclim_var = 'tasmin');
