@@ -254,12 +254,12 @@ for scale_method in ls_scale_methods:
 		get_model_mdata(h5files[1],metadata)
 
 		## Insert metadata in PostgreSQL DB
-		if period == ls_periods[0]:
-			for climvar in ls_climvars:
-				cur = conn.cursor()
-				cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
-				cur.close()
-			logging.info('METADATA importation SUCCEED !')
+		# if period == ls_periods[0]:
+		# 	for climvar in ls_climvars:
+		# 		cur = conn.cursor()
+		# 		cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
+		# 		cur.close()
+		# 	logging.info('METADATA importation SUCCEED !')
 
 
 		for ndataset in range(0,ndatasets):
@@ -311,21 +311,21 @@ for scale_method in ls_scale_methods:
 					dict_hex[climvar_file] = hex_code[0]
 
 				# Clean out_files folder
-				os.system('rm ./out_files/*.sql')
-				os.system('rm ./out_files/*.asc')
+				#os.system('rm ./out_files/*.sql')
+				#os.system('rm ./out_files/*.asc')
 
 
 				#update individual md_id by climvar
-				if date == 0:
-					cur = conn.cursor()
-					cur.execute("SELECT bioclim_var, md_id FROM modclim.rs_metadata_tbl WHERE ouranos_version = %s AND ref_model_ipcc = %s AND ref_scenario_ipcc = %s AND run = %s AND dscaling_method = %s AND is_obs = %s AND is_pred = %s;",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred']))
-					md_id_vars = cur.fetchall()
-					dict_md_id_vars = dict(md_id_vars)
+				# if date == 0:
+				# 	cur = conn.cursor()
+				# 	cur.execute("SELECT bioclim_var, md_id FROM modclim.rs_metadata_tbl WHERE ouranos_version = %s AND ref_model_ipcc = %s AND ref_scenario_ipcc = %s AND run = %s AND dscaling_method = %s AND is_obs = %s AND is_pred = %s;",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred']))
+				# 	md_id_vars = cur.fetchall()
+				# 	dict_md_id_vars = dict(md_id_vars)
 
-				for climvar in ls_climvars:
-					cur = conn.cursor()
-					cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, raster ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
-					cur.close()
+				# for climvar in ls_climvars:
+				# 	cur = conn.cursor()
+				# 	cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, raster ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
+				# 	cur.close()
 				
 				conn.commit()	
 

@@ -1,10 +1,10 @@
-### Build grid based on bound coordinates fron HDF5 file
+### Build grid based on bound coordinates from HDF5 file
 ### By Steve Vissault
 
 
 # Set wd and import file --------------------------------------------------
 
-setwd("~/Documents/GitHub/OuranosDB/out_files/")
+setwd("../out_files/")
 ls_files  <- list.files(getwd(),pattern=".csv")
 
 require(sp)

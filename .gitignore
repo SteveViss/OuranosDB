@@ -10,5 +10,7 @@
 *.pyc
 
 # log
-
 *.log
+
+# Explo grid
+/explo_grid/
