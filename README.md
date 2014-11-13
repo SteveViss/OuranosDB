@@ -1,7 +1,11 @@
-Ouranos
+Ouranos database
 =========
 
-Importation tests for Regional Climatic Models (HDF5 format, version >7.4, ```*.mat```) outputs into PostGIS raster objects.
+Importation of Regional Climatic Models outputs (HDF5 format, version >7.4, ```*.mat```) into a spatial PostgreSQL database.
+
+**Database schema:**
+
+![DB_archi](/archi_sql/modclim_db.png)
 
 Dependencies
 ============
@@ -13,13 +17,6 @@ Dependencies
 	import h5py
 	import numpy
 	import pandas
-
-**R (3.0+):**
-
-	require(sp)
-	require(ggplot2)
-	require(ggmap)
-	require(stringr)
 
 **PostgreSQL (9.3) with PostGIS (2.1+):**
 
