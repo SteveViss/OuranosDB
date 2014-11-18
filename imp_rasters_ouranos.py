@@ -1,3 +1,33 @@
+#! /usr/bin/env python
+#
+#
+# This is a simple utility used to dump Ouranos RCM outputs into a postgreSQL database with postGIS.
+# in future. For more details about this tool, see Specification page:
+# https://github.com/SteveViss/OuranosDB
+#
+# The script requires Python 2.7+
+################################################################################
+# The MIT License (MIT)
+# Copyright (c) 2014 Steve Vissault
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+################################################################################
+
 import os
 import h5py as h5
 import numpy as np
@@ -9,10 +39,167 @@ import time
 import sys
 
 ####################################
+# PROGRAM
+####################################
+
+def main(arguments):
+
+	# OPEN LOG
+	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',filename=cur_datetime('fulldatetime')+'_import_h5.log',level=logging.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
+
+	# Setup wd
+	os.chdir(os.getcwd())
+
+
+	# IMPORT PROGRAM ARGUMENTS
+	h5folder = model = None
+	while(arguments):
+		curSwitch = arguments[0]
+		curArg = arguments[1]
+		
+		print("%s",arguments)
+
+		if curSwitch == '-f':
+			h5folder = curArg
+		elif curSwitch == '-m':
+			model = curArg
+
+	if h5folder is None or model is None:
+		raise RuntimeError('Folder (-f) and model (-m) arguments are required')
+
+		del arguments[0]
+		del arguments[1]
+
+	# VARIABLES
+	ls_climvars = ['tasmin','tasmax','pr']
+	ls_periods = ['pres','fut']
+	ls_scale_methods = ['Dtrans','Dscaling']
+
+	h5files_model = get_model_h5files(h5folder, model)
+	h5files = {}
+
+	# Setup connection with the database
+	conn = psycopg2.connect("host=localhost port=5433 dbname=ouranos_db_dev user=postgres")
+
+	#Load hfiles
+	for id_file in range(0,len(h5files_model)):
+		h5files[h5files_model['region'][id_file]] = import_h5(h5folder,h5files_model['name'][id_file])
+
+	for scale_method in ls_scale_methods:
+		for period in ls_periods:
+
+			# Debug 
+			#scale_method = ls_scale_methods[0]
+			#period = ls_periods[1]
+
+			# Write metadata of the model group in dict 
+			metadata = {'model_ipcc':'','scenario_ipcc':'','run_ipcc':'','mod_code_ouranos':'','scale_meth': scale_method, 'period': period, 'climvar': '', 'date': '', 'is_obs': False, 'is_pred': True}
+
+			logging.info('METADATA: %s',model)
+			logging.info('\t Scaling method: %s',metadata['scale_meth'])
+			logging.info('\t Time period: %s',metadata['period'])
+
+			# Adjust struct by period
+			if metadata['period'] == 'fut':
+				ndatasets = 2 
+			if metadata['period'] == 'pres':
+				ndatasets = 1
+
+
+			# Fill metadata in dict
+			get_model_mdata(h5files[1],metadata)
+
+			# Insert metadata in PostgreSQL DB
+			if period == ls_periods[0]:
+				for climvar in ls_climvars:
+					cur = conn.cursor()
+					cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
+					cur.close()
+				logging.info('METADATA importation SUCCEED !')
+
+
+			for ndataset in range(0,ndatasets):
+
+				#Get dates_reference
+				dates = get_dates_pred(h5files[1],metadata,ndataset)
+
+				# Loop over dates
+				for date in range(0,len(dates)):
+					metadata['date'] = dates[date]
+					logging.info('\t Date: %s',metadata['date'])
+
+					dict_out_climvars = {'pr': pd.DataFrame() ,'tasmin': pd.DataFrame() ,'tasmax': pd.DataFrame()}
+
+					# Loop over files
+					for hfile in h5files:
+
+						#Loop over climvar
+						for climvar in ls_climvars:
+							metadata['climvar'] = climvar
+
+							# Request data (clim, coords)
+							clim_var = get_clim_var_pred(h5files[hfile], metadata, climvar, date, ndataset)
+							coord_cells = get_cells_centroid_pred(h5files[hfile])
+
+							df_out = pd.DataFrame(coord_cells)
+							df_out[climvar] = clim_var
+
+							dict_out_climvars[climvar] = dict_out_climvars[climvar].append(df_out)
+
+					dict_out_climvars = get_write_del_doublons(dict_out_climvars)
+					df_merge_all_climvars = merge_dict_in_df(dict_out_climvars)
+					write_rs(df_merge_all_climvars,metadata,ls_climvars)
+
+					ls_asc_files = [f for f in os.listdir('./out_files/') if '.asc' in f]
+					dict_hex = {'pr':'','tasmin':'','tasmax':''}
+
+					# generate INSERT with raster2pgsql 
+					for asc_file in ls_asc_files:
+						command = 'python ./raster2pgsql.py -a -s 4326 -r ./out_files/'+asc_file+' -t modclim.rs_content_tbl -f rs_content > ./out_files/' + asc_file.replace(".asc",".sql")
+						os.system(command)
+
+						# Get hex code
+						insert_line=open('./out_files/'+asc_file.replace(".asc",".sql")).readlines()[1]
+						hex_code = re.findall(r'\'(.*?)\'', insert_line)
+
+						#Store hex code
+						climvar_file = re.split('_',asc_file)[0]
+						dict_hex[climvar_file] = hex_code[0]
+
+					# Clean out_files folder
+					os.system('rm ./out_files/*.sql')
+					os.system('rm ./out_files/*.asc')
+
+					# Retrieve metadata id from the database
+					if date == 0:
+						cur = conn.cursor()
+						cur.execute("SELECT bioclim_var, md_id FROM modclim.rs_metadata_tbl WHERE ouranos_version = %s AND ref_model_ipcc = %s AND ref_scenario_ipcc = %s AND run = %s AND dscaling_method = %s AND is_obs = %s AND is_pred = %s;",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred']))
+						md_id_vars = cur.fetchall()
+						dict_md_id_vars = dict(md_id_vars)
+
+					# Insert rasters in postgreSQL
+					for climvar in ls_climvars:
+						cur = conn.cursor()
+						cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, raster ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
+						cur.close()
+					
+					conn.commit()	
+
+	conn.close()
+
+
+####################################
 # FUNCTIONS
 ####################################
 
 def cur_datetime(opt):
+
+	"""	DESCRIPTION: Get the datetime (formatted) from your machine.
+		ARGUMENTS: 
+		1. fulldatetime: format datime as 2014-11-12T11:20:30
+		2. date: format date as 2014-11-12
+	"""
+
 	current_time = time.localtime()
 	if opt == 'fulldatetime': 
 		return time.strftime('%Y-%m-%dT%H:%M:%S', current_time)
@@ -25,7 +212,10 @@ def cur_datetime(opt):
 
 def import_h5( h5folder, name_h5file ):
 
-	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	""" DESCRIPTION: Load HDF5 file in memory using the module h5py
+		ARGUMENTS: 
+		1. h5folder - name of the folder containing HDF5 files
+		2. name_h5file - name of the HDF5 file
 	"""
 
 	try:
@@ -39,7 +229,10 @@ def import_h5( h5folder, name_h5file ):
 
 def get_model_h5files (h5folder , group_model):
 
-	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	""" DESCRIPTION: Get all HDF5 files in the HDF5 folder containing the name of the model
+		ARGUMENTS: 
+		 1. h5folder - name of the folder containing HDF5 files
+		 2. group_model - name of the model (e.g. 'gcm1_cccma_cgcm3_1-sresa1b-run1')
 	"""
 
 	group_h5files = [f for f in os.listdir('./'+ h5folder) if os.path.isfile(os.path.join(h5folder,f)) and group_model in f]
@@ -54,7 +247,11 @@ def get_model_h5files (h5folder , group_model):
 
 def get_cells_bounds_pred( hfile, out = False):
 
-	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+
+	""" DESCRIPTION: Extract from a h5file (class h5py), all cells boundaries (min and max latitude and longitude)
+		ARGUMENTS: 
+		 1. h5file - h5file open with the h5py module
+		 2. out - if out == True, write cells_bounds dataframe to a CSV file in out_files folder 
 	"""
 
 	bound_grids = hfile['out']['grid']['BoundingBox']
@@ -76,7 +273,10 @@ def get_cells_bounds_pred( hfile, out = False):
 
 def get_cells_centroid_pred( hfile , out = False):
 
-	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	""" DESCRIPTION: Extract from a h5file (class h5py), all cells centroid (median latitude and longitude)
+		ARGUMENTS: 
+		 1. h5file - h5file open with the h5py module
+		 2. out - if out == True, write cells_centroid dataframe to a CSV file in out_files folder 
 	"""
 	
 	ls_centroid = []
@@ -98,7 +298,11 @@ def get_cells_centroid_pred( hfile , out = False):
 
 def get_dates_pred( hfile , metadata,ndataset):
 
-	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	""" DESCRIPTION: Get all dates contained in the h5file (class h5py) for a specific period (future or present) and down-scaling method
+		ARGUMENTS: 
+		 1. h5file - h5file open with the h5py module
+		 2. metadata - Dictionnary object storing metadata informations on the model
+		 3. ndataset - integer corresponding to the number of datasets contained in 'dates' (fut = 2 and pres = 1)
 	"""
 
 	hdf_path_dates = "/".join(['out',metadata['scale_meth'],metadata['period'],'pr','dates'])
@@ -127,8 +331,16 @@ def get_dates_pred( hfile , metadata,ndataset):
 
 def get_clim_var_pred( hfile , metadata, climvar, date, ndataset):
 
-	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+
+	""" DESCRIPTION: Extract all values of a bioclimatic variable given a specific date and period
+		ARGUMENTS: 
+		 1. h5file - h5file open with the h5py module
+		 2. metadata - Dictionnary object storing metadata informations on the model
+		 3. climvar - string corresponding to the name of the bioclimatic variable targeted (see ls_climvars)
+		 4. date - integer attributing a specific date in the list object "dates"
+		 5. ndataset - integer corresponding to the number of datasets contained in 'dates' (fut = 2 and pres = 1)
 	"""
+
 	hdf_path_data = "/".join(['out',metadata['scale_meth'],metadata['period'],metadata['climvar'],'data'])
 
 	ls_climvar = []
@@ -142,7 +354,10 @@ def get_clim_var_pred( hfile , metadata, climvar, date, ndataset):
 
 def get_write_del_doublons(dict_out_climvars,delete=True):
 
-	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	""" DESCRIPTION: Check if the grid have doublons (cells appear twice). This functions keep a track of any of those doublons writing a file (with _doublons_ tag) in the folder out_files and delete them. 
+		ARGUMENTS: 
+		 1. dict_out_climvars - Dictionnary containing dataframe with the full grid and the value of the bioclimatic variable. Dict keys are corresponding to the name of the variable in ls_climvars
+		 2. delete - if delete == True (by default), each doublons are deleted in the returned object of this functions
 	"""
 
 	dict_dup_climvars = {'pr':pd.DataFrame(),'tasmin':pd.DataFrame(),'tasmax':pd.DataFrame()}
@@ -160,7 +375,10 @@ def get_write_del_doublons(dict_out_climvars,delete=True):
 
 def get_model_mdata(hfile,metadata):
 
-	"""  DESC: Surgeret mundanum sublimibus auspiciis quarum surgeret quarum Virtus ut homines.
+	""" DESCRIPTION: Write metadata of the model in a the dictionnary object.
+		ARGUMENTS: 
+		 1. h5file - h5file open with the h5py module
+		 2. metadata - Dictionnary object storing metadata informations of the model
 	"""
 
 	desc_model =  filter(None,re.split('-',"".join([chr(item) for item in hfile['out']['model']])))
@@ -170,7 +388,15 @@ def get_model_mdata(hfile,metadata):
 	metadata['run_ipcc'] = desc_model[2]
 	metadata['mod_code_ouranos'] = re.split('-|_',model)[0]
 
+	return metadata
+
 def merge_dict_in_df(dict_out_climvars,out=False):
+
+	""" DESCRIPTION: 
+		ARGUMENTS: 
+		 1. dict_out_climvars - Dictionnary containing dataframe with the full grid and the value of the bioclimatic variable. Dict keys are corresponding to the name of the variable in ls_climvars
+		 2. delete - if delete == True (by default), each doublons are deleted in the returned object of this functions
+	"""
 
 	# merge and reshape all climatic variable in panda dataframe
 	df_merge_all_climvars = pd.merge(dict_out_climvars['pr'],dict_out_climvars['tasmin'],on=['lat','lon'])
@@ -204,129 +430,7 @@ def write_rs(df_merge_all_climvars,metadata,ls_climvar):
 			asc_out.write('NODATA_VALUE '+str(no_dat_val)+'\n')
 			np.savetxt(asc_out, arr.as_matrix(), delimiter=' ')
 
-###############################################################################
-
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',filename=cur_datetime('fulldatetime')+'_import_h5.log',level=logging.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
-
-####################################
-# PROGRAM
-####################################
-
-# Setup wd
-os.chdir("/home/steve/Documents/GitHub/OuranosDB/")
-
-# VARIABLES
-h5folder= 'mat_files/'
-model = 'gcm1_cccma_cgcm3_1-sresa1b-run1' # for loop
-ls_climvars = ['tasmin','tasmax','pr']
-ls_periods = ['pres','fut']
-ls_scale_methods = ['Dtrans','Dscaling']
-
-h5files_model = get_model_h5files(h5folder, model)
-h5files = {}
-
-conn = psycopg2.connect("host=localhost port=5433 dbname=ouranos_db_dev user=postgres")
-
-#Load hfiles
-for id_file in range(0,len(h5files_model)):
-	h5files[h5files_model['region'][id_file]] = import_h5(h5folder,h5files_model['name'][id_file])
-
-for scale_method in ls_scale_methods:
-	for period in ls_periods:
-
-		#scale_method = ls_scale_methods[0]
-		#period = ls_periods[1]
-
-		metadata = {'model_ipcc':'','scenario_ipcc':'','run_ipcc':'','mod_code_ouranos':'','scale_meth': scale_method, 'period': period, 'climvar': '', 'date': '', 'is_obs': False, 'is_pred': True}
-
-		logging.info('METADATA: %s',model)
-		logging.info('\t Scaling method: %s',metadata['scale_meth'])
-		logging.info('\t Time period: %s',metadata['period'])
-
-		# Adjust struct by period
-		if metadata['period'] == 'fut':
-			ndatasets = 2 
-		if metadata['period'] == 'pres':
-			ndatasets = 1
 
 
-		# fill metadata in dict
-		get_model_mdata(h5files[1],metadata)
-
-		# Insert metadata in PostgreSQL DB
-		if period == ls_periods[0]:
-			for climvar in ls_climvars:
-				cur = conn.cursor()
-				cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
-				cur.close()
-			logging.info('METADATA importation SUCCEED !')
-
-
-		for ndataset in range(0,ndatasets):
-
-			#Get dates_reference
-			dates = get_dates_pred(h5files[1],metadata,ndataset)
-
-			# Loop over dates
-			for date in range(0,len(dates)):
-				metadata['date'] = dates[date]
-				logging.info('\t Date: %s',metadata['date'])
-
-				dict_out_climvars = {'pr': pd.DataFrame() ,'tasmin': pd.DataFrame() ,'tasmax': pd.DataFrame()}
-
-				# Loop over files
-				for hfile in h5files:
-
-					#Loop over climvar
-					for climvar in ls_climvars:
-						metadata['climvar'] = climvar
-
-						# Request data (clim, coords)
-						clim_var = get_clim_var_pred(h5files[hfile], metadata, climvar, date, ndataset)
-						coord_cells = get_cells_centroid_pred(h5files[hfile])
-
-						df_out = pd.DataFrame(coord_cells)
-						df_out[climvar] = clim_var
-
-						dict_out_climvars[climvar] = dict_out_climvars[climvar].append(df_out)
-
-				dict_out_climvars = get_write_del_doublons(dict_out_climvars)
-				df_merge_all_climvars = merge_dict_in_df(dict_out_climvars)
-				write_rs(df_merge_all_climvars,metadata,ls_climvars)
-
-				# generate INSERT with raster2pgsql 
-				ls_asc_files = [f for f in os.listdir('./out_files/') if '.asc' in f]
-				dict_hex = {'pr':'','tasmin':'','tasmax':''}
-
-				for asc_file in ls_asc_files:
-					command = 'python ./raster2pgsql.py -a -s 4326 -r ./out_files/'+asc_file+' -t modclim.rs_content_tbl -f rs_content > ./out_files/' + asc_file.replace(".asc",".sql")
-					os.system(command)
-
-					# Get hex code
-					insert_line=open('./out_files/'+asc_file.replace(".asc",".sql")).readlines()[1]
-					hex_code = re.findall(r'\'(.*?)\'', insert_line)
-
-					#Store hex code
-					climvar_file = re.split('_',asc_file)[0]
-					dict_hex[climvar_file] = hex_code[0]
-
-				# Clean out_files folder
-				os.system('rm ./out_files/*.sql')
-				os.system('rm ./out_files/*.asc')
-
-
-				#update individual md_id by climvar
-				if date == 0:
-					cur = conn.cursor()
-					cur.execute("SELECT bioclim_var, md_id FROM modclim.rs_metadata_tbl WHERE ouranos_version = %s AND ref_model_ipcc = %s AND ref_scenario_ipcc = %s AND run = %s AND dscaling_method = %s AND is_obs = %s AND is_pred = %s;",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred']))
-					md_id_vars = cur.fetchall()
-					dict_md_id_vars = dict(md_id_vars)
-
-				for climvar in ls_climvars:
-					cur = conn.cursor()
-					cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, raster ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
-					cur.close()
-				
-				conn.commit()	
-
-conn.close()
+if __name__ == "__main__":
+   main(sys.argv[1:])
