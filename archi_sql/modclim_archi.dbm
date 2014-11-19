@@ -10,11 +10,11 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <schema name="public" protected="true" fill-color="#e1e1e1" sql-disabled="true">
 </schema>
 
-<schema name="modclim" rect-visible="true" fill-color="#ffff7f">
+<schema name="ouranos_dev" rect-visible="true" fill-color="#ffff7f">
 </schema>
 
 <table name="rs_metadata_tbl">
-	<schema name="modclim"/>
+	<schema name="ouranos_dev"/>
 	<position x="34" y="32"/>
 	<column name="md_id" not-null="true">
 		<type name="serial"/>
@@ -43,20 +43,20 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="bioclim_var" not-null="true">
 		<type name="varchar" length="20"/>
 	</column>
-	<constraint name="rs_metadata_tbl_pkey" type="pk-constr" factor="10" table="modclim.rs_metadata_tbl">
+	<constraint name="rs_metadata_tbl_pkey" type="pk-constr" factor="10" table="ouranos_dev.rs_metadata_tbl">
 		<columns names="md_id" ref-type="src-columns"/>
 	</constraint>
-	<constraint name="mdata_const_uq" type="uq-constr" factor="10" table="modclim.rs_metadata_tbl">
+	<constraint name="mdata_const_uq" type="uq-constr" factor="10" table="ouranos_dev.rs_metadata_tbl">
 		<columns names="ouranos_version,ref_model_ipcc,ref_scenario_ipcc,run,dscaling_method,is_obs,is_pred,bioclim_var" ref-type="src-columns"/>
 	</constraint>
-	<index name="idx_rs_metadata_pkey" table="modclim.rs_metadata_tbl"
+	<index name="idx_rs_metadata_pkey" table="ouranos_dev.rs_metadata_tbl"
 		 concurrent="false" unique="true" fast-update="false"
 		 index-type="btree" factor="0">
 		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
 			<column name="md_id"/>
 		</idxelement>
 	</index>
-	<index name="idx_rs_metadata_uq" table="modclim.rs_metadata_tbl"
+	<index name="idx_rs_metadata_uq" table="ouranos_dev.rs_metadata_tbl"
 		 concurrent="false" unique="true" fast-update="false"
 		 index-type="btree" factor="0">
 		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
@@ -87,7 +87,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 </table>
 
 <table name="rs_content_tbl">
-	<schema name="modclim"/>
+	<schema name="ouranos_dev"/>
 	<position x="392" y="83"/>
 	<column name="rs_id" not-null="true">
 		<type name="serial"/>
@@ -98,10 +98,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="rs_date" not-null="true">
 		<type name="date"/>
 	</column>
-	<constraint name="rs_content_pkey" type="pk-constr" factor="10" table="modclim.rs_content_tbl">
+	<constraint name="rs_content_pkey" type="pk-constr" factor="10" table="ouranos_dev.rs_content_tbl">
 		<columns names="rs_id" ref-type="src-columns"/>
 	</constraint>
-	<index name="idx_rs_content_pkey" table="modclim.rs_content_tbl"
+	<index name="idx_rs_content_pkey" table="ouranos_dev.rs_content_tbl"
 		 concurrent="false" unique="false" fast-update="false"
 		 index-type="btree" factor="0">
 		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
@@ -115,8 +115,8 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
 	 src-fk-pattern="{st}_fk"
 	 col-indexes="3" constr-indexes="0"
-	 src-table="modclim.rs_metadata_tbl"
-	 dst-table="modclim.rs_content_tbl"
+	 src-table="ouranos_dev.rs_metadata_tbl"
+	 dst-table="ouranos_dev.rs_content_tbl"
 	 src-required="true" dst-required="false"
 	upd-action="CASCADE"
 	del-action="CASCADE"/>

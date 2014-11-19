@@ -28,20 +28,17 @@
 # SOFTWARE.
 ################################################################################
 
-import os
 import h5py as h5
 import numpy as np
-import re
 import pandas as pd
 import psycopg2
 import logging
-import time
-import sys
+import os,re,time,sys,getopt
 
 ####################################
 # PROGRAM
 ####################################
-
+@profile
 def main(arguments):
 
 	# OPEN LOG
@@ -50,25 +47,21 @@ def main(arguments):
 	# Setup wd
 	os.chdir(os.getcwd())
 
-
 	# IMPORT PROGRAM ARGUMENTS
 	h5folder = model = None
-	while(arguments):
-		curSwitch = arguments[0]
-		curArg = arguments[1]
-		
-		print("%s",arguments)
+	opts, args = getopt.getopt(arguments,"hf:m:",["h5folder=","model="])
 
-		if curSwitch == '-f':
-			h5folder = curArg
-		elif curSwitch == '-m':
-			model = curArg
+	for opt, arg in opts:
+		if opt == '-h':
+		   print 'test.py -f <h5folder> -m <model>'
+		   sys.exit()
+		elif opt in ("-f", "--h5folder"):
+		   h5folder = arg+"/"
+		elif opt in ("-m", "--model"):
+		   model = arg
 
 	if h5folder is None or model is None:
 		raise RuntimeError('Folder (-f) and model (-m) arguments are required')
-
-		del arguments[0]
-		del arguments[1]
 
 	# VARIABLES
 	ls_climvars = ['tasmin','tasmax','pr']
@@ -79,7 +72,7 @@ def main(arguments):
 	h5files = {}
 
 	# Setup connection with the database
-	conn = psycopg2.connect("host=localhost port=5433 dbname=ouranos_db_dev user=postgres")
+	conn = psycopg2.connect("host=localhost port=5433 dbname=ouranos_db user=postgres")
 
 	#Load hfiles
 	for id_file in range(0,len(h5files_model)):
@@ -107,13 +100,13 @@ def main(arguments):
 
 
 			# Fill metadata in dict
-			get_model_mdata(h5files[1],metadata)
+			get_model_mdata(h5files[1],metadata,model)
 
 			# Insert metadata in PostgreSQL DB
 			if period == ls_periods[0]:
 				for climvar in ls_climvars:
 					cur = conn.cursor()
-					cur.execute("INSERT INTO modclim.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
+					cur.execute("INSERT INTO ouranos_dev.rs_metadata_tbl (ouranos_version, ref_model_ipcc, ref_scenario_ipcc, run, dscaling_method, is_obs, is_pred, bioclim_var) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred'],climvar))
 					cur.close()
 				logging.info('METADATA importation SUCCEED !')
 
@@ -124,7 +117,7 @@ def main(arguments):
 				dates = get_dates_pred(h5files[1],metadata,ndataset)
 
 				# Loop over dates
-				for date in range(0,len(dates)):
+				for date in range(0,5):
 					metadata['date'] = dates[date]
 					logging.info('\t Date: %s',metadata['date'])
 
@@ -167,20 +160,20 @@ def main(arguments):
 						dict_hex[climvar_file] = hex_code[0]
 
 					# Clean out_files folder
-					os.system('rm ./out_files/*.sql')
-					os.system('rm ./out_files/*.asc')
+					#os.system('rm ./out_files/*.sql')
+					#os.system('rm ./out_files/*.asc')
 
 					# Retrieve metadata id from the database
 					if date == 0:
 						cur = conn.cursor()
-						cur.execute("SELECT bioclim_var, md_id FROM modclim.rs_metadata_tbl WHERE ouranos_version = %s AND ref_model_ipcc = %s AND ref_scenario_ipcc = %s AND run = %s AND dscaling_method = %s AND is_obs = %s AND is_pred = %s;",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred']))
+						cur.execute("SELECT bioclim_var, md_id FROM ouranos_dev.rs_metadata_tbl WHERE ouranos_version = %s AND ref_model_ipcc = %s AND ref_scenario_ipcc = %s AND run = %s AND dscaling_method = %s AND is_obs = %s AND is_pred = %s;",('v2014', metadata['model_ipcc'],metadata['scenario_ipcc'],int(re.findall('\d+', metadata['run_ipcc'])[0]),metadata['scale_meth'],metadata['is_obs'],metadata['is_pred']))
 						md_id_vars = cur.fetchall()
 						dict_md_id_vars = dict(md_id_vars)
 
 					# Insert rasters in postgreSQL
 					for climvar in ls_climvars:
 						cur = conn.cursor()
-						cur.execute("INSERT INTO modclim.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, raster ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
+						cur.execute("INSERT INTO ouranos_dev.rs_content_tbl (md_id_rs_metadata_tbl, rs_date, raster ) VALUES (%s,%s,%s :: raster)",(str(dict_md_id_vars[climvar]),metadata['date'],dict_hex[climvar]))
 						cur.close()
 					
 					conn.commit()	
@@ -270,7 +263,6 @@ def get_cells_bounds_pred( hfile, out = False):
 	return ls_bound
 
 
-
 def get_cells_centroid_pred( hfile , out = False):
 
 	""" DESCRIPTION: Extract from a h5file (class h5py), all cells centroid (median latitude and longitude)
@@ -344,7 +336,6 @@ def get_clim_var_pred( hfile , metadata, climvar, date, ndataset):
 	hdf_path_data = "/".join(['out',metadata['scale_meth'],metadata['period'],metadata['climvar'],'data'])
 
 	ls_climvar = []
-
 	dataset_clim_date = hfile[hfile[hdf_path_data][ndataset,0]][...,date].astype(float)
 		
 	for n in range(0,len(dataset_clim_date)):
@@ -373,12 +364,13 @@ def get_write_del_doublons(dict_out_climvars,delete=True):
 
 	return dict_out_climvars
 
-def get_model_mdata(hfile,metadata):
+def get_model_mdata(hfile,metadata,model):
 
 	""" DESCRIPTION: Write metadata of the model in a the dictionnary object.
 		ARGUMENTS: 
 		 1. h5file - h5file open with the h5py module
 		 2. metadata - Dictionnary object storing metadata informations of the model
+		 3. model - name of the model (e.g. 'gcm1_cccma_cgcm3_1-sresa1b-run1')
 	"""
 
 	desc_model =  filter(None,re.split('-',"".join([chr(item) for item in hfile['out']['model']])))
@@ -392,10 +384,10 @@ def get_model_mdata(hfile,metadata):
 
 def merge_dict_in_df(dict_out_climvars,out=False):
 
-	""" DESCRIPTION: 
+	""" DESCRIPTION: Merge all dataframes contained in dict_out_climvars into one final dataframe (lon, lat, pr, tasmin, tasmax)
 		ARGUMENTS: 
 		 1. dict_out_climvars - Dictionnary containing dataframe with the full grid and the value of the bioclimatic variable. Dict keys are corresponding to the name of the variable in ls_climvars
-		 2. delete - if delete == True (by default), each doublons are deleted in the returned object of this functions
+		 2. out - if out == True, the dataframe will be write in the out_files folder.
 	"""
 
 	# merge and reshape all climatic variable in panda dataframe
@@ -407,7 +399,13 @@ def merge_dict_in_df(dict_out_climvars,out=False):
 
 	return df_merge_all_climvars
 
-def write_rs(df_merge_all_climvars,metadata,ls_climvar):
+def write_rs(df_merge_all_climvars,metadata,ls_climvars):
+		""" DESCRIPTION: Write dataframe named df_merge_all_climvars containing all bioclimatic variables and centroid of all cells to an ASCII raster (.asc).
+		ARGUMENTS: 
+		 1. dict_out_climvars - Dictionnary containing dataframe with the full grid and the value of the bioclimatic variable. Dict keys are corresponding to the name of the variable in ls_climvars
+		 2. metadata - Dictionnary object storing metadata informations of the model
+		 3. ls_climvars - List of the bioclimatic variables
+		"""
 
 	for climvar in ls_climvars:
 		arr = df_merge_all_climvars.pivot(index='lat', columns='lon', values=climvar)
