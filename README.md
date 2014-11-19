@@ -38,4 +38,13 @@ Getting started
 
 	git clone git@github.com:SteveViss/OuranosDB.git
 	cd OuranosDB
-	python ./imp_rasters_ouranos.py --log=INFO
+	python imp_rasters_ouranos.py -f mat_files -m gcm1_cccma_cgcm3_1-sresa1b-run1
+
+*This command line import all raster for the group of models: gcm1_cccma_cgcm3_1-sresa1b-run1*
+
+Evaluate performance using line_profiler
+===============
+
+### Memory 
+
+	python -m memory_profiler imp_rasters_ouranos.py -f mat_files -m gcm1_cccma_cgcm3_1-sresa1b-run1 > mem_profile.txt

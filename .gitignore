@@ -12,5 +12,9 @@
 # log
 *.log
 
-# Explo grid
+# Data exploration
 /explo_grid/
+
+# Memory aid
+mem_colosse.md
+bash_exemple_colosse.sh

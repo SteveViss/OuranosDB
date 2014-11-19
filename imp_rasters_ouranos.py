@@ -40,7 +40,6 @@ import os,re,time,sys,getopt
 ####################################
 # PROGRAM
 ####################################
-@profile
 def main(arguments):
 
 	# OPEN LOG
@@ -119,7 +118,7 @@ def main(arguments):
 				dates = get_dates_pred(h5files[1],metadata,ndataset)
 
 				# Loop over dates
-				for date in range(0,5):
+				for date in range(0,len(dates)):
 					metadata['date'] = dates[date]
 					logging.info('\t Date: %s',metadata['date'])
 
@@ -162,8 +161,7 @@ def main(arguments):
 						dict_hex[climvar_file] = hex_code[0]
 
 					# Clean out_files folder
-					#os.system('rm ./out_files/*.sql')
-					#os.system('rm ./out_files/*.asc')
+					os.system('rm ./out_files/*.sql ./out_files/*.asc')
 
 					# Retrieve metadata id from the database
 					if date == 0:
@@ -402,12 +400,12 @@ def merge_dict_in_df(dict_out_climvars,out=False):
 	return df_merge_all_climvars
 
 def write_rs(df_merge_all_climvars,metadata,ls_climvars):
-		""" DESCRIPTION: Write dataframe named df_merge_all_climvars containing all bioclimatic variables and centroid of all cells to an ASCII raster (.asc).
-		ARGUMENTS: 
-		 1. dict_out_climvars - Dictionnary containing dataframe with the full grid and the value of the bioclimatic variable. Dict keys are corresponding to the name of the variable in ls_climvars
-		 2. metadata - Dictionnary object storing metadata informations of the model
-		 3. ls_climvars - List of the bioclimatic variables
-		"""
+	""" DESCRIPTION: Write dataframe named df_merge_all_climvars containing all bioclimatic variables and centroid of all cells to an ASCII raster (.asc).
+	ARGUMENTS: 
+	 1. dict_out_climvars - Dictionnary containing dataframe with the full grid and the value of the bioclimatic variable. Dict keys are corresponding to the name of the variable in ls_climvars
+	 2. metadata - Dictionnary object storing metadata informations of the model
+	 3. ls_climvars - List of the bioclimatic variables
+	"""
 
 	for climvar in ls_climvars:
 		arr = df_merge_all_climvars.pivot(index='lat', columns='lon', values=climvar)
