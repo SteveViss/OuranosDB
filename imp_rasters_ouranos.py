@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 #
 #
-# This is a simple utility used to dump Ouranos RCM outputs into a postgreSQL database with postGIS.
-# in future. For more details about this tool, see Specification page:
+# This is a simple utility used to dump Ouranos RCM outputs 
+# into raster objects. Each raster are store in a postgreSQL 
+# database with postGIS.
+# For more details about this tool, see Specification page:
 # https://github.com/SteveViss/OuranosDB
 #
 # The script requires Python 2.7+
