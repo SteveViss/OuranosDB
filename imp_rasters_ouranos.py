@@ -178,6 +178,7 @@ def main(arguments):
 					
 					conn.commit()	
 
+
 	conn.close()
 
 
@@ -329,7 +330,7 @@ def get_clim_var_pred( hfile , metadata, climvar, date, ndataset):
 		 1. h5file - h5file open with the h5py module
 		 2. metadata - Dictionnary object storing metadata informations on the model
 		 3. climvar - string corresponding to the name of the bioclimatic variable targeted (see ls_climvars)
-		 4. date - integer attributing a specific date in the list object "dates"
+		 4. date - integer attributing a specific date in the list "dates"
 		 5. ndataset - integer corresponding to the number of datasets contained in 'dates' (fut = 2 and pres = 1)
 	"""
 
