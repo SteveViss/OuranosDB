@@ -49,20 +49,39 @@ def main(arguments):
 	os.chdir(os.getcwd())
 
 	# IMPORT PROGRAM ARGUMENTS
-	h5folder = model = None
-	opts, args = getopt.getopt(arguments,"hf:m:",["h5folder=","model="])
+	h5folder = model = host = username = database = None
+	port = 5432
+
+	opts, args = getopt.getopt(arguments,"hf:m:h:p:U:d",["h5folder=","model=","host=","port=","username=","database="])
 
 	for opt, arg in opts:
 		if opt == '-h':
-		   print 'test.py -f <h5folder> -m <model>'
+		   print 'imp_raster_ouranos.py ----- help \n'
+		   print '  -f <h5folder> \t Specify the folder path where the matfiles are stored (without /)'
+		   print '  -m <model> \t Name of the class model: gcm1_cccma_cgcm3_1-sresa1b-run1'
+		   print '  -h <host> \t PostgreSQL host address'
+		   print '  -p <port> \t PostgreSQL Port (5432 by default) '
+		   print '  -U <username> \t postgreSQL username'
+		   print '  -d <database> \t postgreSQL database where rasters need to be imported'
 		   sys.exit()
 		elif opt in ("-f", "--h5folder"):
 		   h5folder = arg+"/"
 		elif opt in ("-m", "--model"):
 		   model = arg
+		elif opt in ("-h", "--host"):
+		   host = arg
+		elif opt in ("-p", "--port"):
+		   port = arg
+		elif opt in ("-U", "--username"):
+		   user = arg
+		elif opt in ("-d", "--database"):
+		   db = arg
 
 	if h5folder is None or model is None:
 		raise RuntimeError('Folder (-f) and model (-m) arguments are required')
+
+	if db is None or host is None or user is None or :
+		raise RuntimeError('Database connection information are required (flags -h,-U,-d)')
 
 	# VARIABLES
 	ls_climvars = ['tasmin','tasmax','pr']
@@ -73,7 +92,7 @@ def main(arguments):
 	h5files = {}
 
 	# Setup connection with the database
-	conn = psycopg2.connect("host=localhost port=5433 dbname=ouranos_db user=postgres")
+	conn = psycopg2.connect("host="+host+" port="+port+" dbname="+db+" user="+user)
 
 	#Load hfiles
 	for id_file in range(0,len(h5files_model)):
