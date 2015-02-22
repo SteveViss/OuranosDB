@@ -40,7 +40,7 @@ get_ext <- function(lon,lat){
     return(ext)
 }
 
-write_stack_dates <- function(arr_var,dates=dates,ext=ext,out_path=out_path){
+write_stack_dates <- function(arr_var){
 
     st <- stack()
 
@@ -54,6 +54,6 @@ write_stack_dates <- function(arr_var,dates=dates,ext=ext,out_path=out_path){
     names(st) <- dates
 
 
-    invisible(writeRaster(stack(st), paste0(out_path,arr_var$name,"-",hfile,"-", gsub("[.X]","",as.character(names(st))),".tif"), bylayer=TRUE, format='GTiff',overwrite=TRUE))
+    invisible(writeRaster(stack(st), paste0(out_path,arr_var$name,"-",name_hfile,"-", gsub("[.X]","",as.character(names(st))),".tif"), bylayer=TRUE, format='GTiff',overwrite=TRUE))
 
 }

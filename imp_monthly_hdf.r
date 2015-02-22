@@ -24,32 +24,35 @@
 ##### DESCRIPTION
 # Load GCMs downscaled (HDF5 files) and provided by Ouranos into a postgreSQL database
 
-
-# source("http://bioconductor.org/biocLite.R")
-# biocLite("rhdf5")
-
-rm(list=ls())
-
 require(rhdf5)
 require(rgdal)
 require(raster)
-require(stringr)
+require(argparse)
 
-source("fcts_hdf.r")
+# handle command line arguments
+parser = ArgumentParser()
+parser$add_argument("-f", "--hdf", type="string", help="Set target file (HDF5 file with Ouranos structure)")
+parser$add_argument("-d", "--directory", default="./out_files/", help="Set outputs directory")
+argList = parser$parse_args()
 
-hfile <- "monthlyNRCAN+CSIRO_QCCCE-CSIRO_Mk3_6_0-r1i1p1_historical+rcp60-190001-190912"
-out_path <- "./out_files/"
+    # source("http://bioconductor.org/biocLite.R")
+    # biocLite("rhdf5")
 
-path_hfile<- paste0("./mat_files/",hfile,".mat")
-content <- h5ls(path_hfile)
+hfile <- argList$hdf
+out_path <- argList$directory
+
+source("./fcts_hdf.r")
+
+path_hfile<- paste0("./mat_files/",hfile)
+name_hfile <- gsub("[.mat]","",hfile)
 
 lat <- h5read(path_hfile,"/out/lat")$data
 lon <- h5read(path_hfile,"/out/lon")$data
 times <- h5read(path_hfile,"/out/time_vectors")$data
 ext <- get_ext(lon,lat)
 ls_arr_vars <- list(    list(values=h5read(path_hfile,"/out/tasmin")$data, name="tasmin"),
-                        list(values=h5read(path_hfile,"/out/tasmax")$data, name="tasmax"),
-                        list(values=h5read(path_hfile,"/out/pr")$data, name="pr"))
+    list(values=h5read(path_hfile,"/out/tasmax")$data, name="tasmax"),
+    list(values=h5read(path_hfile,"/out/pr")$data, name="pr"))
 
 dates <- as.Date(paste(times[,1],times[,2],times[,3],sep="-"))
 
@@ -57,5 +60,8 @@ if(check_res(lon,lat)>0){
     stop("Program stopped by raster errors...",call.=TRUE)
 }
 
-invisible(lapply(ls_arr_vars,write_stack_dates,dates,ext,out_path))
+invisible(lapply(ls_arr_vars,write_stack_dates))
+
+
+
 
