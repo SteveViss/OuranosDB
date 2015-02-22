@@ -31,7 +31,7 @@ require(argparse)
 
 # handle command line arguments
 parser = ArgumentParser()
-parser$add_argument("-f", "--hdf", type="string", help="Set target file (HDF5 file with Ouranos structure)")
+parser$add_argument("-f", "--hdf", help="Set target file (HDF5 file with Ouranos structure)")
 parser$add_argument("-d", "--directory", default="./out_files/", help="Set outputs directory")
 argList = parser$parse_args()
 
