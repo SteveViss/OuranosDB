@@ -45,7 +45,7 @@ write_stack_dates <- function(arr_var,dates=dates,ext=ext,out_path=out_path){
     st <- stack()
 
     for (t in 1:length(dates)){
-        rs <- raster(as.matrix(arr_var[t,,]))
+        rs <- raster(as.matrix(arr_var$values[t,,]))
         extent(rs) <- ext
         projection(rs) <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs ")
         st <- addLayer(st,rs)
@@ -54,6 +54,6 @@ write_stack_dates <- function(arr_var,dates=dates,ext=ext,out_path=out_path){
     names(st) <- dates
 
 
-    invisible(writeRaster(stack(st), paste0(out_path,names(arr_var),"-",hfile,"-",str_replace(str_replace(names(st),".","-"),"X",""),".tif"), bylayer=TRUE, format='GTiff',overwrite=TRUE))
+    invisible(writeRaster(stack(st), paste0(out_path,arr_var$name,"-",hfile,"-", gsub("[.X]","",as.character(names(st))),".tif"), bylayer=TRUE, format='GTiff',overwrite=TRUE))
 
 }

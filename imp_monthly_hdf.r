@@ -47,9 +47,9 @@ lat <- h5read(path_hfile,"/out/lat")$data
 lon <- h5read(path_hfile,"/out/lon")$data
 times <- h5read(path_hfile,"/out/time_vectors")$data
 ext <- get_ext(lon,lat)
-vec_obj_vars <- list( tasmin=h5read(path_hfile,"/out/tasmin")$data,
-                        tasmax=h5read(path_hfile,"/out/tasmax")$data,
-                        pr=h5read(path_hfile,"/out/pr")$data)
+ls_arr_vars <- list(    list(values=h5read(path_hfile,"/out/tasmin")$data, name="tasmin"),
+                        list(values=h5read(path_hfile,"/out/tasmax")$data, name="tasmax"),
+                        list(values=h5read(path_hfile,"/out/pr")$data, name="pr"))
 
 dates <- as.Date(paste(times[,1],times[,2],times[,3],sep="-"))
 
@@ -57,5 +57,5 @@ if(check_res(lon,lat)>0){
     stop("Program stopped by raster errors...",call.=TRUE)
 }
 
-invisible(lapply(vec_obj_vars,write_stack_dates,dates,ext,out_path))
+invisible(lapply(ls_arr_vars,write_stack_dates,dates,ext,out_path))
 

@@ -12,12 +12,8 @@
 # log
 *.log
 
-#Old version
-obs_version_python.py
-
-
-# Data exploration
-/explo_grid/
+#Manage outputs
+out_files/*
 
 # Memory aid
 mem_colosse.md
