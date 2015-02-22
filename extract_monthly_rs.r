@@ -1,3 +1,5 @@
+#!/usr/bin/Rscript
+
 # The MIT License (MIT)
 #
 # Copyright (c) 2015 Steve Vissault

@@ -4,7 +4,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
 <dbmodel pgmodeler-ver="0.7.1">
-<database name="modclim_db">
+<database name="quicc_for_dev">
 </database>
 
 <schema name="public" protected="true" fill-color="#e1e1e1" sql-disabled="true">
@@ -13,112 +13,44 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <schema name="ouranos_dev" rect-visible="true" fill-color="#ffff7f">
 </schema>
 
-<table name="rs_metadata_tbl">
-	<schema name="ouranos_dev"/>
-	<position x="34" y="32"/>
-	<column name="md_id" not-null="true">
-		<type name="serial"/>
-	</column>
-	<column name="ouranos_version">
-		<type name="varchar" length="20"/>
-	</column>
-	<column name="ref_model_ipcc" not-null="true">
-		<type name="varchar" length="15"/>
-	</column>
-	<column name="ref_scenario_ipcc" not-null="true">
-		<type name="varchar" length="15"/>
-	</column>
-	<column name="run" not-null="true">
-		<type name="smallint"/>
-	</column>
-	<column name="dscaling_method" not-null="true">
-		<type name="varchar" length="10"/>
-	</column>
-	<column name="is_obs" not-null="true">
-		<type name="boolean"/>
-	</column>
-	<column name="is_pred" not-null="true">
-		<type name="boolean"/>
-	</column>
-	<column name="bioclim_var" not-null="true">
-		<type name="varchar" length="20"/>
-	</column>
-	<constraint name="rs_metadata_tbl_pkey" type="pk-constr" factor="10" table="ouranos_dev.rs_metadata_tbl">
-		<columns names="md_id" ref-type="src-columns"/>
-	</constraint>
-	<constraint name="mdata_const_uq" type="uq-constr" factor="10" table="ouranos_dev.rs_metadata_tbl">
-		<columns names="ouranos_version,ref_model_ipcc,ref_scenario_ipcc,run,dscaling_method,is_obs,is_pred,bioclim_var" ref-type="src-columns"/>
-	</constraint>
-	<index name="idx_rs_metadata_pkey" table="ouranos_dev.rs_metadata_tbl"
-		 concurrent="false" unique="true" fast-update="false"
-		 index-type="btree" factor="0">
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="md_id"/>
-		</idxelement>
-	</index>
-	<index name="idx_rs_metadata_uq" table="ouranos_dev.rs_metadata_tbl"
-		 concurrent="false" unique="true" fast-update="false"
-		 index-type="btree" factor="0">
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="ouranos_version"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="ref_model_ipcc"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="ref_scenario_ipcc"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="run"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="dscaling_method"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="is_obs"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="is_pred"/>
-		</idxelement>
-		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="bioclim_var"/>
-		</idxelement>
-	</index>
-</table>
-
 <table name="rs_content_tbl">
 	<schema name="ouranos_dev"/>
-	<position x="392" y="83"/>
+	<position x="44" y="54"/>
 	<column name="rs_id" not-null="true">
 		<type name="serial"/>
+	</column>
+	<column name="filename" not-null="true">
+		<type name="varchar" length="100"/>
+		<comment><![CDATA[Name of the HDF file]]></comment>
+	</column>
+	<column name="rs_var">
+		<type name="varchar" length="10"/>
+		<comment><![CDATA[Name of the climatic variable]]></comment>
+	</column>
+	<column name="rs_date">
+		<type name="date"/>
+		<comment><![CDATA[Raster date]]></comment>
 	</column>
 	<column name="raster" not-null="true">
 		<type name="raster"/>
 	</column>
-	<column name="rs_date" not-null="true">
-		<type name="date"/>
-	</column>
-	<constraint name="rs_content_pkey" type="pk-constr" factor="10" table="ouranos_dev.rs_content_tbl">
+	<constraint name="rs_pkey" type="pk-constr" factor="10" table="ouranos_dev.rs_content_tbl">
 		<columns names="rs_id" ref-type="src-columns"/>
 	</constraint>
-	<index name="idx_rs_content_pkey" table="ouranos_dev.rs_content_tbl"
+	<index name="idx_rs_var" table="ouranos_dev.rs_content_tbl"
 		 concurrent="false" unique="false" fast-update="false"
 		 index-type="btree" factor="0">
 		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
-			<column name="rs_id"/>
+			<column name="rs_var"/>
+		</idxelement>
+	</index>
+	<index name="idx_rs_date" table="ouranos_dev.rs_content_tbl"
+		 concurrent="false" unique="false" fast-update="false"
+		 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="rs_date"/>
 		</idxelement>
 	</index>
 </table>
-
-<relationship name="rs_metadata_tbl_has_many_rs_content_tbl" type="rel1n"
-	 src-col-pattern="{sc}_{st}"
-	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
-	 src-fk-pattern="{st}_fk"
-	 col-indexes="3" constr-indexes="0"
-	 src-table="ouranos_dev.rs_metadata_tbl"
-	 dst-table="ouranos_dev.rs_content_tbl"
-	 src-required="true" dst-required="false"
-	upd-action="CASCADE"
-	del-action="CASCADE"/>
 
 </dbmodel>

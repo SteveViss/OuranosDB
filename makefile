@@ -3,14 +3,17 @@
 # Adapted from STModel-Data repo, by Matt Tallutto et Steve Vissault
 
 HDF_FOLDER = "./mat_files/"
+HOST = "localhost"
+PORT = 5433
+DBNAME = "quicc_for_dev"
+USER = "postgres"
 
-all:
+all: db
 
-db:
+db: archi_sql/ouranos_sch.sql
+	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -f archi_sql/ouranos_sch.sql
 
-listHDF:
-
-run:
+run: extract_monthly_rs.r imp_monthly_rs.sh
 
 clean_files:
 
