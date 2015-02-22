@@ -5,7 +5,7 @@ Importation of General Circulation Models downscaled for North America (HDF5 for
 
 **Database schema:**
 
-![DB_archi](/archi_sql/modclim_db.png)
+![DB_archi](/archi_sql/ouranos_sch.png)
 
 **HDF5 structure:**
 
