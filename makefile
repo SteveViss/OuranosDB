@@ -3,6 +3,7 @@
 # Adapted from STModel-Data repo, by Matt Tallutto et Steve Vissault
 
 HDF_FOLDER = "./mat_files/"
+OUT_FOLDER = "./out_files/"
 HOST = "localhost"
 PORT = 5433
 DBNAME = "quicc_for_dev"
@@ -13,10 +14,11 @@ all: db
 db: archi_sql/ouranos_sch.sql
 	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -f archi_sql/ouranos_sch.sql
 
-run: extract_monthly_rs.r imp_monthly_rs.sh
+run: ext/extract_monthly_rs.r ext/fcts_hdf.r ext/imp_monthly_rs.sh
 
-clean_files:
-
+clean_tif:
+	rm $(OUT_FOLDER)*.tif
 clean_db:
+	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -c "DROP SCHEMA IF EXISTS ouranos_dev CASCADE;"
 
-
+clean: clean_db clean_tif
