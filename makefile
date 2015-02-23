@@ -1,6 +1,6 @@
 # Makefile to export GCMs from Ouranos into a PostgreSQL database
 # Feb 22, 2015
-# Adapted from STModel-Data repo, by Matt Tallutto et Steve Vissault
+# Adapted from STModel-Data repo, by Matt Talluto and Steve Vissault
 
 HDF_FOLDER = "./mat_files/"
 OUT_FOLDER = "./out_files/"
