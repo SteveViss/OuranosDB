@@ -26,6 +26,11 @@
 ##### DESCRIPTION
 # Load GCMs downscaled (HDF5 files) and provided by Ouranos into a postgreSQL database
 
+if(!require(rhdf5)){install.packages('rhdf5',repos='http://cran.skazkaforyou.com/')}
+if(!require(rgdal)){install.packages('rgdal',repos='http://cran.skazkaforyou.com/')}
+if(!require(raster)){install.packages('raster',repos='http://cran.skazkaforyou.com/')}
+if(!require(argparse)){install.packages('argparse',repos='http://cran.skazkaforyou.com/')}
+
 require(rhdf5)
 require(rgdal)
 require(raster)
