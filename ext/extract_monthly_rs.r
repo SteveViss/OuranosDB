@@ -39,19 +39,24 @@ require(argparse)
 # handle command line arguments
 parser = ArgumentParser()
 parser$add_argument("-f", "--hdf", help="Set target file (HDF5 file with Ouranos structure)")
-parser$add_argument("-d", "--directory", default="./out_files/", help="Set outputs directory")
+parser$add_argument("-o", "--folder_outputs", default="./out_files/", help="Set outputs directory")
+parser$add_argument("-i", "--folder_inputs", default="./mat_files/", help="Set inputs directory")
 argList = parser$parse_args()
 
     # source("http://bioconductor.org/biocLite.R")
     # biocLite("rhdf5")
 
+source("./ext/fcts_hdf.r")
+
 hfile <- argList$hdf
-out_path <- argList$directory
+name_hfile <- paste0(argList$hdf,".mat")
+in_path <- argList$folder_inputs
+path_hfile<- paste0(in_path,name_hfile)
+out_path <- argList$folder_outputs
 
-source("./fcts_hdf.r")
+system(paste0("mkdir -p ", out_path,hfile))
 
-path_hfile<- paste0("./mat_files/",hfile)
-name_hfile <- gsub("[.mat]","",hfile)
+out_path <- paste0(out_path,hfile,"/")
 
 lat <- h5read(path_hfile,"/out/lat")$data
 lon <- h5read(path_hfile,"/out/lon")$data

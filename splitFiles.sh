@@ -1,6 +1,8 @@
 #!/bin/bash
 #This shell script splits a large folder of files into many smaller subfolders. You can define the no. of files in a subfolder.
-# Doubts: printf "format"
+
+# First args should be the output folder
+
 
 # Checking input...
 

@@ -20,7 +20,8 @@ splitFiles: $(HDF_FOLDER)*
 run: ext/extract_monthly_rs.r ext/fcts_hdf.r ext/imp_monthly_rs.sh
 
 clean_tif:
-	rm $(OUT_FOLDER)*.tif
+	rm -r $(OUT_FOLDER)*
+
 clean_db:
 	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -c "DROP SCHEMA IF EXISTS ouranos_dev CASCADE;"
 
