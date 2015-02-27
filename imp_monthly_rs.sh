@@ -5,10 +5,12 @@ DBNAME=quicc_for_dev
 USER=postgres
 
 cd $1
+
 MatFiles=(`ls *.mat`)
-cd ..
 
 for mat_file in ${MatFiles[*]}; do
+
+    cd ..
 
     Rscript ./ext/extract_monthly_rs.r -f ${mat_file[*]%.*} -i $1 -o $2
 
