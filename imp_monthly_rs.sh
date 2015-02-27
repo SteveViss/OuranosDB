@@ -1,20 +1,27 @@
 #!/bin/bash
-
-MAT_FILE=$1
-INPUT_FOLDER=$2
-OUPUT_FOLDER=$3
 HOST=localhost
 PORT=5433
 DBNAME=quicc_for_dev
 USER=postgres
 
-#Rscript ./ext/extract_monthly_rs.r -f $1 -i $2 -o $3
+cd $1
+MatFiles=(`ls *.mat`)
+cd ..
 
-cd $3$1
+for mat_file in ${MatFiles[*]}; do
 
-TiffFiles=(`ls *.tif`)
+    Rscript ./ext/extract_monthly_rs.r -f ${mat_file[*]%.*} -i $1 -o $2
 
-for file in ${TiffFiles[*]}; do
-    python ../../imp/raster2pgsql.py -a -s 4326 -F -r $file -f raster -k 100x100 -t ouranos_dev.rs_content_tbl | psql -h $HOST -p $PORT -d $DBNAME -U $USER > ../../log.stout
-    rm $file
+    cd $2${mat_file%.*}
+
+    TiffFiles=(`ls *.tif`)
+
+    for tiff_file in ${TiffFiles[*]}; do
+        python ../../imp/raster2pgsql.py -a -s 4326 -F -r $tiff_file -f raster -k 100x100 -t ouranos_dev.rs_content_tbl | psql -h $HOST -p $PORT -d $DBNAME -U $USER &>/dev/null
+        rm $tiff_file
+    done
+
+    cd ..
+    rm -r ${mat_file%.*}
+
 done

@@ -17,7 +17,7 @@ db: archi_sql/ouranos_sch.sql
 splitFiles: $(HDF_FOLDER)*
 	bash splitFiles.sh $(HDF_FOLDER)
 
-run: ext/extract_monthly_rs.r ext/fcts_hdf.r ext/imp_monthly_rs.sh
+run: ext/extract_monthly_rs.r ext/fcts_hdf.r ./imp_monthly_rs.sh
 
 clean_tif:
 	rm -r $(OUT_FOLDER)*
