@@ -2,7 +2,7 @@
 -- pgModeler  version: 0.7.1
 -- PostgreSQL version: 9.3
 -- Project Site: pgmodeler.com.br
--- Model Author: Steve Vissault---
+-- Model Author: ---
 
 SET check_function_bodies = false;
 -- ddl-end --
@@ -25,9 +25,9 @@ CREATE SCHEMA ouranos_dev;
 SET search_path TO pg_catalog,public,ouranos_dev;
 -- ddl-end --
 
--- object: ouranos_dev.rs_content_tbl | type: TABLE --
--- DROP TABLE ouranos_dev.rs_content_tbl;
-CREATE TABLE ouranos_dev.rs_content_tbl(
+-- object: ouranos_dev.mod_rs_ouranos | type: TABLE --
+-- DROP TABLE ouranos_dev.mod_rs_ouranos;
+CREATE TABLE ouranos_dev.mod_rs_ouranos(
 	rs_id serial NOT NULL,
 	filename varchar(100) NOT NULL,
 	rs_var varchar(10),
@@ -39,7 +39,7 @@ CREATE TABLE ouranos_dev.rs_content_tbl(
 -- ddl-end --
 -- object: idx_rs_var | type: INDEX --
 -- DROP INDEX ouranos_dev.idx_rs_var;
-CREATE INDEX idx_rs_var ON ouranos_dev.rs_content_tbl
+CREATE INDEX idx_rs_var ON ouranos_dev.mod_rs_ouranos
 	USING btree
 	(
 	  rs_var ASC NULLS LAST
@@ -48,7 +48,7 @@ CREATE INDEX idx_rs_var ON ouranos_dev.rs_content_tbl
 
 -- object: idx_rs_date | type: INDEX --
 -- DROP INDEX ouranos_dev.idx_rs_date;
-CREATE INDEX idx_rs_date ON ouranos_dev.rs_content_tbl
+CREATE INDEX idx_rs_date ON ouranos_dev.mod_rs_ouranos
 	USING btree
 	(
 	  rs_date ASC NULLS LAST
@@ -56,9 +56,18 @@ CREATE INDEX idx_rs_date ON ouranos_dev.rs_content_tbl
 -- ddl-end --
 
 
-COMMENT ON COLUMN ouranos_dev.rs_content_tbl.filename IS 'Name of the HDF file';
-COMMENT ON COLUMN ouranos_dev.rs_content_tbl.rs_var IS 'Name of the climatic variable';
-COMMENT ON COLUMN ouranos_dev.rs_content_tbl.rs_date IS 'Raster date';
+-- object: spatial_idx | type: INDEX --
+-- DROP INDEX ouranos_dev.spatial_idx;
+CREATE INDEX spatial_idx ON ouranos_dev.mod_rs_ouranos
+	USING gist
+	(
+	  st_convexhull(raster)
+	);
+-- ddl-end --
+
+COMMENT ON COLUMN ouranos_dev.mod_rs_ouranos.filename IS 'Name of the HDF file';
+COMMENT ON COLUMN ouranos_dev.mod_rs_ouranos.rs_var IS 'Name of the climatic variable';
+COMMENT ON COLUMN ouranos_dev.mod_rs_ouranos.rs_date IS 'Date';
 -- ddl-end --
 
 

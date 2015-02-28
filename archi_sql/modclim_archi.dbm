@@ -13,7 +13,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <schema name="ouranos_dev" rect-visible="true" fill-color="#ffff7f">
 </schema>
 
-<table name="rs_content_tbl">
+<table name="mod_rs_ouranos">
 	<schema name="ouranos_dev"/>
 	<position x="44" y="54"/>
 	<column name="rs_id" not-null="true">
@@ -29,22 +29,22 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<column name="rs_date">
 		<type name="date"/>
-		<comment><![CDATA[Raster date]]></comment>
+		<comment><![CDATA[Date]]></comment>
 	</column>
 	<column name="raster" not-null="true">
 		<type name="raster"/>
 	</column>
-	<constraint name="rs_pkey" type="pk-constr" factor="10" table="ouranos_dev.rs_content_tbl">
+	<constraint name="rs_pkey" type="pk-constr" factor="10" table="ouranos_dev.mod_rs_ouranos">
 		<columns names="rs_id" ref-type="src-columns"/>
 	</constraint>
-	<index name="idx_rs_var" table="ouranos_dev.rs_content_tbl"
+	<index name="idx_rs_var" table="ouranos_dev.mod_rs_ouranos"
 		 concurrent="false" unique="false" fast-update="false"
 		 index-type="btree" factor="0">
 		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
 			<column name="rs_var"/>
 		</idxelement>
 	</index>
-	<index name="idx_rs_date" table="ouranos_dev.rs_content_tbl"
+	<index name="idx_rs_date" table="ouranos_dev.mod_rs_ouranos"
 		 concurrent="false" unique="false" fast-update="false"
 		 index-type="btree" factor="0">
 		<idxelement use-sorting="true" nulls-first="false" asc-order="true">

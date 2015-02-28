@@ -25,4 +25,7 @@ clean_tif:
 clean_db:
 	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -c "DROP SCHEMA IF EXISTS ouranos_dev CASCADE;"
 
+vac_db:
+	vacuumdb  -U ${USER} -h ${HOST} -p ${PORT} -d ${DBNAME} --analyze --verbose
+
 clean: clean_db clean_tif
