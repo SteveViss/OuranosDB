@@ -9,8 +9,6 @@ PORT = 5433
 DBNAME = quicc_for_dev
 USER = postgres
 
-all: db
-
 db: archi_sql/ouranos_sch.sql
 	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -f archi_sql/ouranos_sch.sql
 
