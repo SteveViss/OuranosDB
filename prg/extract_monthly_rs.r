@@ -22,11 +22,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+## Ressources by process:
+## 3.6 to 4.2 Go of RAM
+## 1,548 Go of Disk space
+
 
 ##### DESCRIPTION
 # Load GCMs downscaled (HDF5 files) and provided by Ouranos into a postgreSQL database
 
-require(argparse)
+suppressMessages(require(argparse))
 
 # handle command line arguments
 parser<- ArgumentParser()
@@ -44,15 +48,17 @@ argList = parser$parse_args()
 
 # Librairies
 
-require(rhdf5)
-require(rgdal)
-require(raster)
-require(stringr)
+suppressMessages(require(rhdf5))
+suppressMessages(require(rgdal))
+suppressMessages(require(raster))
+suppressMessages(require(stringr))
 
 source("./prg/fcts_hdf.r")
 
 # Fix possible issue with extension file
 if(str_detect(argList$hdf,".mat") == FALSE) {argList$hdf <- str_c(argList$hdf,".mat")}
+
+cat('Processing on: ', argList$hdf, '-------- \n')
 
 ######################################################################
 # Set variable
@@ -87,10 +93,12 @@ dir.create(dir_outputs, showWarnings = FALSE)
 ######################################################################
 # Run extraction
 
+cat('Running rasters extraction... \n')
+
 invisible(lapply(ls_arr_vars,write_stack_dates))
 
 # free memory
-rm(c(ls_arr_vars,lat,lon,times,dates,ext))
+rm(ls_arr_vars,lat,lon,times,dates,ext)
 
 ######################################################################
 # Run exportation to postgres SQL
@@ -98,5 +106,7 @@ rm(c(ls_arr_vars,lat,lon,times,dates,ext))
 ls_tif <- list.files(dir_outputs)
 ls_tif <- ls_tif[str_detect(ls_tif,".tif")]
 setwd(str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat","")))
+
+cat('Running postgreSQL importation... \n')
 
 invisible(sapply(ls_tif,pg_export))

@@ -6,10 +6,10 @@ PORT=5433
 DBNAME=quicc_for_dev
 USER=postgres
 
-cd $1
+cd $MATFOLD
 MatFiles=(`ls *.mat`)
 cd ..
 
 for mat_file in ${MatFiles[*]}; do
-    Rscript ./prg/extract_monthly_rs.r -f ${mat_file[*]%.*} -i $MATFOLD -o $OUTFOLD -s "localhost" -p "5433" -d "quicc_for_dev" -u "postgres" mat &> dev/null &
+    Rscript ./prg/extract_monthly_rs.r -f ${mat_file[*]%.*} -i $MATFOLD -o $OUTFOLD -s "localhost" -p "5433" -d "quicc_for_dev" -u "postgres" > stderr.log &
 done

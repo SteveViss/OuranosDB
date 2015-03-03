@@ -62,7 +62,7 @@ write_stack_dates <- function(arr_var){
 
 pg_export <- function(x) {
 
-    cmd_export <- str_c("python ../../prg/raster2pgsql.py -a -s 4326 -F -r ",x," -f raster -k 100x100 -t ouranos_dev.mod_rs_ouranos | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
+    cmd_export <- str_c("python ../../prg/raster2pgsql.py -a -s 4326 -F -r ",x," -f raster -k 10x10 -t ouranos_dev.mod_rs_ouranos | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
 
     system(cmd_export, ignore.stdout=TRUE, wait=TRUE)
 
