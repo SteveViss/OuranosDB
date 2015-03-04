@@ -47,7 +47,6 @@ argList = parser$parse_args()
 # biocLite("rhdf5")
 
 # Librairies
-
 suppressMessages(require(rhdf5))
 suppressMessages(require(rgdal))
 suppressMessages(require(raster))
@@ -70,9 +69,9 @@ times <- h5read(pathFile,"/out/time_vectors")$data
 ext <- get_ext(lon,lat)
 
 ls_arr_vars <- list(
-    list(values=h5read(pathFile,"/out/tasmin")$data, name="tasmin"),
-    list(values=h5read(pathFile,"/out/tasmax")$data, name="tasmax"),
-    list(values=h5read(pathFile,"/out/pr")$data, name="pr"))
+    tasmin=h5read(pathFile,"/out/tasmin")$data,
+    tasmax=h5read(pathFile,"/out/tasmax")$data,
+    pr=h5read(pathFile,"/out/pr")$data)
 
 dates <- as.Date(paste(times[,1],times[,2],times[,3],sep="-"))
 
@@ -95,18 +94,18 @@ dir.create(dir_outputs, showWarnings = FALSE)
 
 cat('Running rasters extraction... \n')
 
-invisible(lapply(ls_arr_vars,write_stack_dates))
+#invisible(sapply(seq(1,length(dates),1),write_stack_by_vars))
 
 # free memory
 rm(ls_arr_vars,lat,lon,times,dates,ext)
 
 ######################################################################
-# Run exportation to postgres SQL
+# Run exportation to postgreSQL
 
 ls_tif <- list.files(dir_outputs)
 ls_tif <- ls_tif[str_detect(ls_tif,".tif")]
-setwd(str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat","")))
 
 cat('Running postgreSQL importation... \n')
 
 invisible(sapply(ls_tif,pg_export))
+

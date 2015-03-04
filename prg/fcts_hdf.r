@@ -42,29 +42,31 @@ get_ext <- function(lon,lat){
 
 }
 
-write_stack_dates <- function(arr_var){
+write_stack_by_vars <- function(t){
 
-    st <- stack()
+    rs_date <- dates[t]
 
-    for (t in 1:length(dates)){
-        rs <- raster(as.matrix(arr_var[[1]][t,,]))
-        extent(rs) <- ext
-        projection(rs) <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs ")
-        st <- addLayer(st,rs)
-    }
+    rs_tmin <- raster(as.matrix(ls_arr_vars$tasmin[t,,]))
+    rs_tmax <- raster(as.matrix(ls_arr_vars$tasmax[t,,]))
+    rs_pr <- raster(as.matrix(ls_arr_vars$pr[t,,]))
 
-    names(st) <- dates
+    extent(rs_tmin) <- extent(rs_tmax) <- extent(rs_pr) <- ext
+    projection(rs_tmin) <- projection(rs_tmax) <- projection(rs_pr) <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs ")
 
+    st <- stack(rs_tmin,rs_tmax,rs_pr)
 
-    invisible(writeRaster(stack(st), str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat",""),"/",arr_var[[2]],"-",str_replace_all(argList$hdf,".mat",""),"-", str_replace_all(names(st),"[X.]",""),".tif"), bylayer=TRUE, format='GTiff',overwrite=TRUE))
+    names(st) <- c("tmin","tmax","pr")
 
+    invisible(writeRaster(stack(st), str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat",""),"/",str_replace_all(argList$hdf,".mat",""),"-", str_replace_all(rs_date,"[X.]",""),".tif"), format='GTiff',overwrite=TRUE))
+
+    rm(st)
 }
 
 pg_export <- function(x) {
 
-    cmd_export <- str_c("python ../../prg/raster2pgsql.py -a -s 4326 -F -r ",x," -f raster -k 10x10 -t ouranos_dev.mod_rs_ouranos | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
+    cmd_export <- str_c("raster2pgsql -a -s 4326 -f raster -r -Y ",str_c(dir_outputs,x)," -F -t 200x90 ouranos_dev.mod_rs_ouranos | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
 
-    system(cmd_export, ignore.stdout=TRUE, wait=TRUE)
+    system(cmd_export,ignore.stdout = TRUE, wait=TRUE)
 
-    file.remove(x)
+    file.remove(str_c(dir_outputs,x))
 }
