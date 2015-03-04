@@ -66,7 +66,7 @@ pg_export <- function(x) {
 
     cmd_export <- str_c("raster2pgsql -a -s 4326 -f raster -r -Y ",str_c(dir_outputs,x)," -F -t 200x90 ouranos_dev.mod_rs_ouranos | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
 
-    system(cmd_export,ignore.stdout = TRUE, wait=TRUE)
+    system(cmd_export, show.output.on.console = FALSE, ignore.stdout = TRUE, ignore.stderr = TRUE, wait=TRUE)
 
     file.remove(str_c(dir_outputs,x))
 }

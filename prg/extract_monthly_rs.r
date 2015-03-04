@@ -26,6 +26,7 @@
 ## 3.6 to 4.2 Go of RAM
 ## 1,548 Go of Disk space
 
+ptm <- proc.time()
 
 ##### DESCRIPTION
 # Load GCMs downscaled (HDF5 files) and provided by Ouranos into a postgreSQL database
@@ -94,7 +95,7 @@ dir.create(dir_outputs, showWarnings = FALSE)
 
 cat('Running rasters extraction... \n')
 
-#invisible(sapply(seq(1,length(dates),1),write_stack_by_vars))
+invisible(sapply(seq(1,length(dates),1),write_stack_by_vars))
 
 # free memory
 rm(ls_arr_vars,lat,lon,times,dates,ext)
@@ -109,3 +110,6 @@ cat('Running postgreSQL importation... \n')
 
 invisible(sapply(ls_tif,pg_export))
 
+dir.remove(dir_outputs)
+cat(proc.time() - ptm, '\n')
+stop('end of the execution')
