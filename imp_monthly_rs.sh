@@ -15,5 +15,5 @@ USER=svissault
 MatFiles=(`$ find ./mat_files/ -name "*.mat" -type f -printf "%f\n"`)
 
 for mat_file in ${MatFiles[*]}; do
-    Rscript ./prg/extract_monthly_rs.r -f ${mat_file[*]%.*} -b "/software6/apps/postgresql/9.3.5/bin/raster2pgsql" -s "localhost" -p "5433" -d "quicc_for_dev" -u "postgres" >> prog.log &
+    Rscript ./prg/extract_monthly_rs.r -f ${mat_file[*]%.*} -b "/software6/apps/postgresql/9.3.5/bin/raster2pgsql" -s $HOST -p $PORT -d $DBNAME -u  >> prog.log &
 done
