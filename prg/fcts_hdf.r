@@ -64,7 +64,7 @@ write_stack_by_vars <- function(t){
 
 pg_export <- function(outdir) {
 
-    cmd_export <- str_c(argList$rs2pg," -a -s 4326 -f raster -r -Y ",outdir,"*.tif -F -t 144x90 ouranos_dev.mod_rs_ouranos 2>/dev/null | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
+    cmd_export <- str_c(argList$rs2pg," -a -s 4326 -f raster -r -Y ",outdir,"*.tif -F -t 48x30 ouranos_dev.mod_rs_ouranos 2>/dev/null | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
 
     system(cmd_export,ignore.stdout = TRUE,ignore.stderr = TRUE, wait=TRUE)
 
