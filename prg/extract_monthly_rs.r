@@ -22,9 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-## Ressources by process:
-## 3.6 to 4.2 Go of RAM
-## 1,548 Go of Disk space
 
 ptm <- proc.time()
 
@@ -38,6 +35,7 @@ parser<- ArgumentParser()
 parser$add_argument('-f', '--hdf', help='Set target file (HDF5 file with ouranos structure)')
 parser$add_argument('-o', '--folder_outputs', default='./out_files/', help='set outputs directory')
 parser$add_argument('-i', '--folder_inputs', default='./mat_files/', help='set inputs directory')
+parser$add_argument('-b', '--rs2pg', default='/software6/apps/postgresql/9.3.5/bin/raster2pgsql', help='Set program path: raster2pgsql')
 parser$add_argument('-s', '--serverhost', help='database server host')
 parser$add_argument('-p', '--port', default='5432', help='database port')
 parser$add_argument('-d', '--database', help='database name')
@@ -55,10 +53,17 @@ suppressMessages(require(stringr))
 
 source("./prg/fcts_hdf.r")
 
+# Unit testing
+# argList$hdf <- "monthlyNRCAN+CCCMA-CanESM2-r1i1p1_historical+rcp45-190001-190912.mat"
+# argList$serverhost <-"localhost"
+# argList$database <-"quicc_for_dev"
+# argList$user <- "postgres"
+# argList$port <- "5433"
+
 # Fix possible issue with extension file
 if(str_detect(argList$hdf,".mat") == FALSE) {argList$hdf <- str_c(argList$hdf,".mat")}
 
-cat('Processing on: ', argList$hdf, '-------- \n')
+cat(argList$hdf, '; start processing \n')
 
 ######################################################################
 # Set variable
@@ -81,7 +86,7 @@ dates <- as.Date(paste(times[,1],times[,2],times[,3],sep="-"))
 # Check raster integrity
 
 if(check_res(lon,lat)>0){
-    stop("Program stopped by raster errors...",call.=TRUE)
+    stop(cat(argList$hdf, "; program stopped by raster errors \n"),call.=TRUE)
 }
 
 ######################################################################
@@ -93,7 +98,7 @@ dir.create(dir_outputs, showWarnings = FALSE)
 ######################################################################
 # Run extraction
 
-cat('Running rasters extraction... \n')
+cat(argList$hdf,'; running rasters extraction \n')
 
 invisible(sapply(seq(1,length(dates),1),write_stack_by_vars))
 
@@ -102,14 +107,9 @@ rm(ls_arr_vars,lat,lon,times,dates,ext)
 
 ######################################################################
 # Run exportation to postgreSQL
+cat(argList$hdf,'; running postgreSQL importation \n')
 
-ls_tif <- list.files(dir_outputs)
-ls_tif <- ls_tif[str_detect(ls_tif,".tif")]
+pg_export(dir_outputs)
 
-cat('Running postgreSQL importation... \n')
-
-invisible(sapply(ls_tif,pg_export))
-
-dir.remove(dir_outputs)
-cat(proc.time() - ptm, '\n')
-stop('end of the execution')
+unlink(dir_outputs,recursive=TRUE)
+cat(argList$hdf,'; execution time:', (proc.time() - ptm)[3],'\n')
