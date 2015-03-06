@@ -4,10 +4,10 @@
 
 HDF_FOLDER = ./mat_files/
 OUT_FOLDER = ./out_files/
-HOST = localhost
-PORT = 5433
-DBNAME = quicc_for_dev
-USER = postgres
+HOST = 132.219.137.38
+PORT = 5432
+DBNAME = mffp
+USER = svissault
 
 db: archi_sql/ouranos_sch.sql
 	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -f archi_sql/ouranos_sch.sql

@@ -9,8 +9,10 @@
 *.Rhistory
 *.pyc
 
-# log
+# logs
 *.log
+*.err
+*.out
 
 #Manage outputs
 out_files/*
