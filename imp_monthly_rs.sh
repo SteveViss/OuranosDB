@@ -1,7 +1,7 @@
 #!/bin/bash
 HOST=localhost ### Modifier pour l'adresse IP MFFP
 PORT=5432
-DBNAME=ouranos_dev
+DBNAME=mffp
 USER=svissault
 
 ## Pour le password - écrire un fichier .pgpass
@@ -15,5 +15,5 @@ USER=svissault
 MatFiles=(`$ find ./mat_files/ -name "*.mat" -type f -printf "%f\n"`)
 
 for mat_file in ${MatFiles[*]}; do
-    Rscript ./prg/extract_monthly_rs.r -f ${mat_file[*]%.*} -b "/software6/apps/postgresql/9.3.5/bin/raster2pgsql" -s $HOST -p $PORT -d $DBNAME -u  >> prog.log &
+    Rscript ./prg/extract_monthly_rs.r -f ${mat_file[*]%.*} -b "/software6/apps/postgresql/9.3.5/bin/raster2pgsql" -s ${HOST} -p ${PORT} -d ${DBNAME} -u ${USER} >> prog.log &
 done
