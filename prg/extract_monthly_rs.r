@@ -53,12 +53,12 @@ suppressMessages(require(stringr))
 
 source("./prg/fcts_hdf.r")
 
-# Unit testing
-# argList$hdf <- "monthlyNRCAN+CCCMA-CanESM2-r1i1p1_historical+rcp45-190001-190912.mat"
-# argList$serverhost <-"localhost"
-# argList$database <-"quicc_for_dev"
-# argList$user <- "postgres"
-# argList$port <- "5433"
+#Unit testing
+argList$hdf <- "monthlyNRCAN+CCCMA-CanESM2-r1i1p1_historical+rcp45-190001-190912.mat"
+argList$serverhost <-"localhost"
+argList$database <-"quicc_for_dev"
+argList$user <- "postgres"
+argList$port <- "5433"
 
 # Fix possible issue with extension file
 if(str_detect(argList$hdf,".mat") == FALSE) {argList$hdf <- str_c(argList$hdf,".mat")}
