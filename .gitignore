@@ -14,6 +14,9 @@
 *.err
 *.out
 
+# Sensitive file
+submit.sh
+
 #Manage outputs
 out_files/*
 

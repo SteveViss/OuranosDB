@@ -1,9 +1,8 @@
 #!/bin/bash
-HOST=localhost ### Modifier pour l'adresse IP MFFP
-PORT=5432
-DBNAME=mffp
-USER=svissault
-
+HOST=localhost
+PORT=5433
+DBNAME=ouranos_dev
+USER=postgres
 ## Pour le password - écrire un fichier .pgpass
 ## Taille de la base de données finale: 46 Go
 
