@@ -50,6 +50,7 @@ suppressMessages(require(rhdf5))
 suppressMessages(require(rgdal))
 suppressMessages(require(raster))
 suppressMessages(require(stringr))
+suppressMessages(require(dplyr))
 
 source("./prg/fcts_hdf.r")
 
