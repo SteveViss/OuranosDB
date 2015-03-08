@@ -112,7 +112,7 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
             invisible(writeRaster(st_final, str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat",""),"/",str_replace_all(argList$hdf,".mat",""),"-", yr,".tif"), format='GTiff',overwrite=TRUE))
 
             #free memory
-            rm(rs_avg_tmin,rs_avg_tmax,rs_pr_tot,rs_avg_temp,st_final,st_tmax,st_tmin,st_pr)
+            rm(rs_avg_tmin,rs_avg_tmax,rs_pr_tot,st_final,st_tmax,st_tmin,st_pr)
         }
 
     } else {
