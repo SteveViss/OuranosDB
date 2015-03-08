@@ -17,28 +17,31 @@ SET check_function_bodies = false;
 -- -- ddl-end --
 --
 
--- object: ouranos_dev | type: SCHEMA --
--- DROP SCHEMA ouranos_dev;
-CREATE SCHEMA ouranos_dev;
+-- object: clim_rs | type: SCHEMA --
+-- DROP SCHEMA clim_rs;
+-- CREATE SCHEMA clim_rs;
 -- ddl-end --
 
-SET search_path TO pg_catalog,public,ouranos_dev;
+SET search_path TO pg_catalog,public,clim_rs;
 -- ddl-end --
 
--- object: ouranos_dev.mod_rs_ouranos | type: TABLE --
--- DROP TABLE ouranos_dev.mod_rs_ouranos;
-CREATE TABLE ouranos_dev.mod_rs_ouranos(
+-- object: clim_rs.fut_clim_vars | type: TABLE --
+-- DROP TABLE clim_rs.fut_clim_vars;
+CREATE TABLE clim_rs.fut_clim_vars(
 	rs_id serial NOT NULL,
 	filename varchar(100) NOT NULL,
-	rs_var varchar(10),
-	rs_date date,
+	clim_center varchar(20),
+	mod varchar(20),
+	run varchar(20),
+	year integer,
 	raster raster NOT NULL,
 	CONSTRAINT rs_pkey PRIMARY KEY (rs_id)
-);
 
-COMMENT ON COLUMN ouranos_dev.mod_rs_ouranos.filename IS 'Name of the HDF file';
-COMMENT ON COLUMN ouranos_dev.mod_rs_ouranos.rs_var IS 'Name of the climatic variable';
-COMMENT ON COLUMN ouranos_dev.mod_rs_ouranos.rs_date IS 'Date';
+);
+-- ddl-end --
+COMMENT ON COLUMN clim_rs.fut_clim_vars.filename IS 'Name of the HDF file';
+COMMENT ON COLUMN clim_rs.fut_clim_vars.run IS 'Name of the climatic variable';
+COMMENT ON COLUMN clim_rs.fut_clim_vars.year IS 'year';
 -- ddl-end --
 
 

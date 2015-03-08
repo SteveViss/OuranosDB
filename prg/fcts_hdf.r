@@ -42,13 +42,20 @@ get_ext <- function(lon,lat){
 
 }
 
-write_stack_by_vars <- function(dates,agg='annual',crop=TRUE){
+write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
 
     dates <- data.frame(fulldate=dates,year=format(dates,'%Y'),id_rows=seq(1,length(dates),1))
 
-    if (agg == 'month') else {
+    # Crop for the eastern part of US
+    ext_crop <- ext
+    ext_crop[c(1,4)] <- c(-97,70)
+
+    if (agg == 'monthly') {
 
         for (t in 1:dim(dates)[1]){
+
+            rs_date <- dates[t,1]
+
             rs_tmin <- raster(as.matrix(ls_arr_vars$tasmin[t,,]))
             rs_tmax <- raster(as.matrix(ls_arr_vars$tasmax[t,,]))
             rs_pr <- raster(as.matrix(ls_arr_vars$pr[t,,]))
@@ -58,35 +65,30 @@ write_stack_by_vars <- function(dates,agg='annual',crop=TRUE){
 
             st <- stack(rs_tmin,rs_tmax,rs_pr)
 
-            # Crop for the eastern part of US
-            ext_crop <- ext
-            ext_crop[c(1,4)] <- c(-97,70)
-            if(crop==TRUE){st<-crop(st,ext_crop)}
+            if(rs_crop==TRUE){st<-crop(st,ext_crop)}
 
             names(st) <- c("tmin","tmax","pr")
 
             invisible(writeRaster(stack(st), str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat",""),"/",str_replace_all(argList$hdf,".mat",""),"-", str_replace_all(rs_date,"[X.]",""),".tif"), format='GTiff',overwrite=TRUE))
 
-            rm(st)
+            rm(st,rs_tmin,rs_tmax,rs_pr)
         }
 
-    } else if(agg=='year'){
+    } else if(agg=='annual'){
 
-        st_final <- st_tmin <- st_tmax <- st_pr <- stack()
 
         #Get min and max rowid for each year
         summary_dates <- as.data.frame(dates %>% group_by(year) %>% summarise(min_row=min(id_rows),max_row=max(id_rows)))
 
         for (r in 1:dim(summary_dates)[1]){
-
-            r=1
+            st_final <- st_tmin <- st_tmax <- st_pr <- stack()
             yr <- summary_dates[r,1]
 
-            for (layer in summary_dates[r,2]:summary_dates[r,3]){
+            for (l in summary_dates[r,2]:summary_dates[r,3]){
                 # Storing layers (one year)
-                st_tmin <- addLayer(st_tmin,raster(as.matrix(ls_arr_vars$tasmin[layer,,])))
-                st_tmax <- addLayer(st_tmax,raster(as.matrix(ls_arr_vars$tasmax[layer,,])))
-                st_pr <- addLayer(st_pr,raster(as.matrix(ls_arr_vars$pr[layer,,])))
+                st_tmin <- addLayer(st_tmin,raster(as.matrix(ls_arr_vars$tasmin[l,,])))
+                st_tmax <- addLayer(st_tmax,raster(as.matrix(ls_arr_vars$tasmax[l,,])))
+                st_pr <- addLayer(st_pr,raster(as.matrix(ls_arr_vars$pr[l,,])))
             }
 
             #Set proj and extent
@@ -94,7 +96,7 @@ write_stack_by_vars <- function(dates,agg='annual',crop=TRUE){
             projection(st_tmin) <- projection(st_tmax) <- projection(st_pr) <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs ")
 
             # Crop on area
-            if(crop==TRUE){
+            if(rs_crop==TRUE){
                 st_tmin <-  crop(st_tmin,ext_crop)
                 st_tmax <- crop(st_tmax,ext_crop)
                 st_pr <- crop(st_pr,ext_crop)
@@ -103,17 +105,19 @@ write_stack_by_vars <- function(dates,agg='annual',crop=TRUE){
             # Compute mean
             rs_avg_tmin <- calc(st_tmin,mean)
             rs_avg_tmax <- calc(st_tmax,mean)
-            rs_avg_pr <- calc(st_pr,sum)
-            rs_avg_temp <- calc(stack(rs_avg_tmin,rs_avg_tmax),mean)
+            rs_pr_tot <- calc(st_pr,sum)
 
-            st_final <- addLayer(st_final,rs_avg_tmin,rs_avg_temp,rs_avg_tmax,rs_avg_pr)
+            st_final <- addLayer(st_final,rs_avg_tmin,rs_avg_tmax,rs_pr_tot)
+            names(st_final) <- c("tmin","tmax","pr_tot")
+            invisible(writeRaster(st_final, str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat",""),"/",str_replace_all(argList$hdf,".mat",""),"-", yr,".tif"), format='GTiff',overwrite=TRUE))
 
+            #free memory
+            rm(rs_avg_tmin,rs_avg_tmax,rs_pr_tot,rs_avg_temp,st_final,st_tmax,st_tmin,st_pr)
         }
 
     } else {
         write("you need to specify temporal aggregation (monthly/annual)...", stderr())
     }
-
 
 }
 

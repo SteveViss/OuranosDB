@@ -6,7 +6,7 @@ HDF_FOLDER=./mat_files/
 OUT_FOLDER=./out_files/
 HOST=localhost
 PORT=5433
-DBNAME=ouranos_dev
+DBNAME=quicc_for_dev
 USER=postgres
 
 # HDF_FOLDER = ./mat_files/
@@ -25,8 +25,8 @@ splitFiles: $(HDF_FOLDER)*
 clean_tif:
 	rm -r $(OUT_FOLDER)*
 
-clean_db:ls
-	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -c "DROP SCHEMA IF EXISTS ouranos_dev CASCADE;"
+clean_db:
+	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -c "DROP TABLE IF EXISTS clim_rs.fur_clim_vars CASCADE;"
 
 vac_db:
 	vacuumdb  -U ${USER} -h ${HOST} -p ${PORT} -d ${DBNAME} --analyze --verbose

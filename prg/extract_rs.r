@@ -101,7 +101,7 @@ dir.create(dir_outputs, showWarnings = FALSE)
 
 cat(argList$hdf,'; running rasters extraction \n')
 
-invisible(sapply(seq(1,length(dates),1),write_stack_by_vars))
+invisible(write_stack_by_vars(dates,agg='annual',rs_crop=TRUE))
 
 # free memory
 rm(ls_arr_vars,lat,lon,times,dates,ext)
