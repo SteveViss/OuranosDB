@@ -1,8 +1,9 @@
 #!/bin/bash
 HOST=localhost
 PORT=5433
-DBNAME=ouranos_dev
+DBNAME=quicc_for_dev
 USER=postgres
+
 ## Pour le password - écrire un fichier .pgpass
 ## Taille de la base de données finale: 46 Go
 
@@ -11,8 +12,8 @@ USER=postgres
 ## 1,548 Go of Disk space
 ## 16 minutes estimées sur ma machine
 
-MatFiles=(`$ find ./mat_files/ -name "*.mat" -type f -printf "%f\n"`)
+MatFiles=(`find ./mat_files/ -name "*.mat" -type f -printf "%f\n"`)
 
 for mat_file in ${MatFiles[*]}; do
-    Rscript ./prg/extract_monthly_rs.r -f ${mat_file[*]%.*} -b "/software6/apps/postgresql/9.3.5/bin/raster2pgsql" -s ${HOST} -p ${PORT} -d ${DBNAME} -u ${USER} >> prog.log &
+    Rscript ./prg/extract_rs.r -f ${mat_file[*]%.*} -b "raster2pgsql" -s ${HOST} -p ${PORT} -d ${DBNAME} -u ${USER} >> prog.log &
 done

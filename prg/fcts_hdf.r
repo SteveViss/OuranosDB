@@ -102,17 +102,28 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
                 st_pr <- crop(st_pr,ext_crop)
             }
 
-            # Compute mean
+            st_annual_mean_temp <- stack()
+
+            # Compute annual mean temp
+            for (l in 1:nlayers(st_tmin)){
+                st_temp <- stack(st_tmin[[l]],st_tmax[[l]])
+                rs_temp <- calc(st_temp,mean)
+                st_annual_mean_temp <- addLayer(st_annual_mean_temp,rs_temp)
+                rm(st_temp,rs_temp)
+            }
+
+            # Compute avg tmin, tmax, and total pr
             rs_avg_tmin <- calc(st_tmin,mean)
             rs_avg_tmax <- calc(st_tmax,mean)
             rs_pr_tot <- calc(st_pr,sum)
+            rs_annual_meant <- calc(st_annual_mean_temp,mean)
 
-            st_final <- addLayer(st_final,rs_avg_tmin,rs_avg_tmax,rs_pr_tot)
-            names(st_final) <- c("tmin","tmax","pr_tot")
+            st_final <- addLayer(st_final,rs_avg_tmin,rs_avg_tmax,rs_pr_tot,rs_annual_meant)
+            names(st_final) <- c("tmin","tmax","pr_tot","annual_mean_temp")
             invisible(writeRaster(st_final, str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat",""),"/",str_replace_all(argList$hdf,".mat",""),"-", yr,".tif"), format='GTiff',overwrite=TRUE))
 
             #free memory
-            rm(rs_avg_tmin,rs_avg_tmax,rs_pr_tot,st_final,st_tmax,st_tmin,st_pr)
+            rm(rs_avg_tmin,rs_avg_tmax,rs_pr_tot,st_final,st_tmax,st_tmin,st_pr,st_annual_mean_temp )
         }
 
     } else {
@@ -123,7 +134,7 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
 
 pg_export <- function(outdir) {
 
-    cmd_export <- str_c(argList$rs2pg," -a -s 4326 -f raster -r -Y ",outdir,"*.tif -F -t auto ouranos_dev.mod_rs_ouranos 2>/dev/null | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
+    cmd_export <- str_c(argList$rs2pg," -a -s 4326 -f raster -r -Y ",outdir,"*.tif -F -t auto clim_rs.fut_clim_vars 2>/dev/null | psql -h ", argList$serverhost ," -p ", argList$port, " -d ", argList$database, " -U ", argList$user)
 
     system(cmd_export,ignore.stdout = TRUE,ignore.stderr = TRUE, wait=TRUE)
 
