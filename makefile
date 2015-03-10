@@ -26,7 +26,7 @@ clean_tif:
 	rm -r $(OUT_FOLDER)*
 
 clean_db:
-	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -c "DROP TABLE IF EXISTS clim_rs.fur_clim_vars CASCADE;"
+	psql -h $(HOST) -p $(PORT) -d $(DBNAME) -U $(USER) -c "DROP TABLE IF EXISTS clim_rs.fut_clim_vars CASCADE;"
 
 vac_db:
 	vacuumdb  -U ${USER} -h ${HOST} -p ${PORT} -d ${DBNAME} --analyze --verbose

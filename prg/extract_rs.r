@@ -60,6 +60,7 @@ source("./prg/fcts_hdf.r")
 # argList$database <-"quicc_for_dev"
 # argList$user <- "postgres"
 # argList$port <- "5433"
+# argList$rs2pg <- "raster2pgsql"
 
 # Fix possible issue with extension file
 if(str_detect(argList$hdf,".mat") == FALSE) {argList$hdf <- str_c(argList$hdf,".mat")}
@@ -101,7 +102,7 @@ dir.create(dir_outputs, showWarnings = FALSE)
 
 cat(argList$hdf,'; running rasters extraction \n')
 
-invisible(write_stack_by_vars(dates,agg='annual',rs_crop=TRUE))
+invisible(write_stack_by_vars(dates,agg='monthly',rs_crop=TRUE))
 
 # free memory
 rm(ls_arr_vars,lat,lon,times,dates,ext)
