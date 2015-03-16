@@ -118,7 +118,7 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
             projection(st_tmin) <- projection(st_tmax) <- projection(st_pr) <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs ")
 
             #Set NA value
-            NAValue(st_tmin) <- NAValue(st_tmax) <- NAValue(st_pr) <- -9999
+            NAvalue(st_tmin) <- NAvalue(st_tmax) <- NAvalue(st_pr) <- -9999
 
             # Crop on area
             if(rs_crop==TRUE){
