@@ -15,7 +15,7 @@ SET check_function_bodies = false;
 -- CREATE DATABASE quicc_for_dev
 -- ;
 -- -- ddl-end --
--- 
+--
 
 -- object: clim_rs | type: SCHEMA --
 -- DROP SCHEMA clim_rs;
@@ -27,7 +27,7 @@ SET search_path TO pg_catalog,public,clim_rs;
 
 -- object: clim_rs.mod_rs_ouranos | type: TABLE --
 -- DROP TABLE clim_rs.mod_rs_ouranos;
-CREATE TABLE clim_rs.mod_rs_ouranos(
+CREATE TABLE clim_rs.fut_clim_vars(
 	rs_id serial NOT NULL,
 	filename varchar(100) NOT NULL,
 	clim_center varchar(20),
