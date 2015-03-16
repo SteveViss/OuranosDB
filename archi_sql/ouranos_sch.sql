@@ -15,33 +15,34 @@ SET check_function_bodies = false;
 -- CREATE DATABASE quicc_for_dev
 -- ;
 -- -- ddl-end --
---
+-- 
 
 -- object: clim_rs | type: SCHEMA --
 -- DROP SCHEMA clim_rs;
--- CREATE SCHEMA clim_rs;
+CREATE SCHEMA clim_rs;
 -- ddl-end --
 
 SET search_path TO pg_catalog,public,clim_rs;
 -- ddl-end --
 
--- object: clim_rs.fut_clim_vars | type: TABLE --
--- DROP TABLE clim_rs.fut_clim_vars;
-CREATE TABLE clim_rs.fut_clim_vars(
+-- object: clim_rs.mod_rs_ouranos | type: TABLE --
+-- DROP TABLE clim_rs.mod_rs_ouranos;
+CREATE TABLE clim_rs.mod_rs_ouranos(
 	rs_id serial NOT NULL,
 	filename varchar(100) NOT NULL,
 	clim_center varchar(20),
 	mod varchar(20),
 	run varchar(20),
-	year integer,
+	scenario varchar(20),
+	var varchar(10),
+	yr integer,
+	mth smallint,
 	raster raster NOT NULL,
 	CONSTRAINT rs_pkey PRIMARY KEY (rs_id)
 
 );
 -- ddl-end --
-COMMENT ON COLUMN clim_rs.fut_clim_vars.filename IS 'Name of the HDF file';
-COMMENT ON COLUMN clim_rs.fut_clim_vars.run IS 'Name of the climatic variable';
-COMMENT ON COLUMN clim_rs.fut_clim_vars.year IS 'year';
+COMMENT ON COLUMN clim_rs.mod_rs_ouranos.filename IS 'Name of the HDF file';
 -- ddl-end --
 
 
