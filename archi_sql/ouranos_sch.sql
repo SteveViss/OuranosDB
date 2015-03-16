@@ -42,7 +42,7 @@ CREATE TABLE clim_rs.fut_clim_vars(
 
 );
 -- ddl-end --
-COMMENT ON COLUMN clim_rs.mod_rs_ouranos.filename IS 'Name of the HDF file';
+COMMENT ON COLUMN clim_rs.fult_clim_vars.filename IS 'Name of the HDF file';
 -- ddl-end --
 
 
