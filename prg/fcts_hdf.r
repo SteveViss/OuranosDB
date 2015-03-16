@@ -110,7 +110,7 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
                 st_tmax <- addLayer(st_tmax,rs_tmax)
                 st_pr <- addLayer(st_pr,rs_pr)
 
-                rm(rs_tasmin,rs_tasmax,rs_pr,tp_tasmin,tp_tasmax,tp_pr)
+                rm(rs_tmin,rs_tmax,rs_pr,tp_tasmin,tp_tasmax,tp_pr)
             }
 
             #Set proj and extent
