@@ -59,9 +59,9 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
             tp_tasmax <- as.matrix(ls_arr_vars$tasmax[t,,])
             tp_pr <- as.matrix(ls_arr_vars$pr[t,,])
 
-            tp_tasmin[which(tp_tasmin=='NaN')] <- -9999
-            tp_tasmax[which(tp_tasmax=='NaN')] <- -9999
-            tp_pr[which(tp_pr=='NaN')] <- -9999
+            tp_tasmin[which(tp_tasmin=='NaN')] <- NA
+            tp_tasmax[which(tp_tasmax=='NaN')] <- NA
+            tp_pr[which(tp_pr=='NaN')] <- NA
 
             rs_tmin <- raster(tp_tasmin)
             rs_tmax <- raster(tp_tasmax)
@@ -82,7 +82,7 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
             rm(st,rs_tmin,rs_tmax,rs_pr,tp_tasmin,tp_tasmax,tp_pr)
         }
 
-    } else if(agg=='annual'){
+    } else if(agg=='annual_biovars'){
 
 
         #Get min and max rowid for each year
@@ -98,9 +98,9 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
                 tp_tasmax <- as.matrix(ls_arr_vars$tasmax[l,,])
                 tp_pr <- as.matrix(ls_arr_vars$pr[l,,])
 
-                tp_tasmin[which(tp_tasmin=='NaN')] <- -9999
-                tp_tasmax[which(tp_tasmax=='NaN')] <- -9999
-                tp_pr[which(tp_pr=='NaN')] <- -9999
+                tp_tasmin[which(tp_tasmin=='NaN')] <- NA
+                tp_tasmax[which(tp_tasmax=='NaN')] <- NA
+                tp_pr[which(tp_pr=='NaN')] <- NA
 
                 rs_tmin <- raster(tp_tasmin)
                 rs_tmax <- raster(tp_tasmax)
@@ -127,32 +127,14 @@ write_stack_by_vars <- function(dates,agg='annual',rs_crop=TRUE){
                 st_pr <- crop(st_pr,ext_crop)
             }
 
-            st_tavg <- stack()
+            bios <- biovars(st_pr,st_tmin,st_tmax)
 
-            # Compute annual mean temp
-            for (l in 1:nlayers(st_tmin)){
-                st_temp <- stack(st_tmin[[l]],st_tmax[[l]])
-                rs_temp <- calc(st_temp,mean)
-                st_tavg <- addLayer(st_tavg,rs_temp)
-                rm(st_temp,rs_temp)
-            }
+            invisible(writeRaster(bios, str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat",""),"/",names(bios),"-",str_replace_all(argList$hdf,".mat",""),"-", yr,".asc"), format='ascii',overwrite=TRUE,bylayer=TRUE))
 
-            # Compute avg tmin, tmax, and total pr
-            rs_avg_tmin <- calc(st_tmin,mean)
-            rs_avg_tmax <- calc(st_tmax,mean)
-            rs_pr_tot <- calc(st_pr,sum)
-            rs_tavg <- calc(st_tavg,mean)
-
-            st_final <- addLayer(st_final,rs_avg_tmin,rs_avg_tmax,rs_pr_tot,rs_tavg)
-            names(st_final) <- c("tmin","tmax","pr_tot","tavg")
-            invisible(writeRaster(st_final, str_c(argList$folder_outputs,str_replace_all(argList$hdf,".mat",""),"/",names(st_final),"-",str_replace_all(argList$hdf,".mat",""),"-", yr,".asc"), format='ascii',overwrite=TRUE,bylayer=TRUE))
-
-            #free memory
-            rm(rs_avg_tmin,rs_avg_tmax,rs_pr_tot,st_final,st_tmax,st_tmin,st_pr,st_annual_mean_temp )
         }
 
     } else {
-        write("you need to specify temporal aggregation (monthly/annual)...", stderr())
+        write("you need to specify temporal aggregation (monthly/annual_biovars)...", stderr())
     }
 
 }

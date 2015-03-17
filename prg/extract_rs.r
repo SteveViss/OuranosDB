@@ -51,6 +51,7 @@ suppressMessages(require(rgdal))
 suppressMessages(require(raster))
 suppressMessages(require(stringr))
 suppressMessages(require(dplyr))
+suppressMessages(require(dismo))
 
 source("./prg/fcts_hdf.r")
 
@@ -102,7 +103,7 @@ dir.create(dir_outputs, showWarnings = FALSE)
 
 cat(argList$hdf,'; running rasters extraction \n')
 
-invisible(write_stack_by_vars(dates,agg='monthly',rs_crop=TRUE))
+invisible(write_stack_by_vars(dates,agg='annual_biovars',rs_crop=TRUE))
 
 # free memory
 rm(ls_arr_vars,lat,lon,times,dates,ext)
