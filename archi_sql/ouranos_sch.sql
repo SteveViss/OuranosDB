@@ -19,7 +19,7 @@ SET check_function_bodies = false;
 
 -- object: clim_rs | type: SCHEMA --
 -- DROP SCHEMA clim_rs;
-CREATE SCHEMA clim_rs;
+-- CREATE SCHEMA clim_rs;
 -- ddl-end --
 
 SET search_path TO pg_catalog,public,clim_rs;
@@ -27,7 +27,7 @@ SET search_path TO pg_catalog,public,clim_rs;
 
 -- object: clim_rs.mod_rs_ouranos | type: TABLE --
 -- DROP TABLE clim_rs.mod_rs_ouranos;
-CREATE TABLE clim_rs.fut_clim_vars(
+CREATE TABLE clim_rs.fut_clim_biovars(
 	rs_id serial NOT NULL,
 	filename varchar(100) NOT NULL,
 	clim_center varchar(20),
@@ -36,13 +36,11 @@ CREATE TABLE clim_rs.fut_clim_vars(
 	scenario varchar(20),
 	var varchar(10),
 	yr integer,
-	mth smallint,
 	raster raster NOT NULL,
-	CONSTRAINT rs_pkey PRIMARY KEY (rs_id)
+	CONSTRAINT rs_biovars_pkey PRIMARY KEY (rs_id)
 
 );
 -- ddl-end --
-COMMENT ON COLUMN clim_rs.fut_clim_vars.filename IS 'Name of the HDF file';
+COMMENT ON COLUMN clim_rs.fut_clim_biovars.filename IS 'Name of the HDF file';
 -- ddl-end --
-
 
