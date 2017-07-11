@@ -35,8 +35,8 @@ CREATE TABLE clim_rs.fut_clim_biovars(
 	run varchar(20),
 	scenario varchar(20),
 	var varchar(10),
-	yr integer,
-	raster raster NOT NULL,
+	year_clim integer,
+	rast raster NOT NULL,
 	CONSTRAINT rs_biovars_pkey PRIMARY KEY (rs_id)
 
 );
